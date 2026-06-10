@@ -237,10 +237,10 @@
         ]);
         const daily = parseDaily(dailyRows);
         allData = { daily, kw:{ pc:parseKw(pcRows), mo:parseKw(moRows) } };
-        const dates = d.daily.map(x=>x.date).sort();
+        const dates = daily.daily.map(x=>x.date).sort();
         if (dates.length > 0) {
           const first = dates[0], last = dates[dates.length-1];
-          document.getElementById("datePeriod").textContent = `📅 데이터 기간: ${first} ~ ${last}`;
+          document.getElementById("datePeriod").textContent = `📅 ${first} ~ ${last}`;
         }
         renderCards(daily);
         renderDeviceTable(daily);

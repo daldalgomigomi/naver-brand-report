@@ -45,8 +45,9 @@
   <div class="header">
     <div>
       <div style="font-size:11px;opacity:.8;letter-spacing:1px;margin-bottom:4px">NAVER BRAND SEARCH REPORT</div>
-              <h1>자사몰 유입을 위한 네이버 브랜드 검색(키워드 광고) 광고 보고서</h1>
+              <h1>자사몰 유입을 위한 네이버 브랜드 검색(키워드) 광고 보고서</h1>
       <p>빌드앤그로우 · 구글 시트 실시간 연동</p>
+      <p id="datePeriod" style="font-size:13px;opacity:.9;margin-top:2px"></p>
     </div>
     <button class="refresh-btn" onclick="loadAll()">🔄 새로고침</button>
   </div>
@@ -236,6 +237,11 @@
         ]);
         const daily = parseDaily(dailyRows);
         allData = { daily, kw:{ pc:parseKw(pcRows), mo:parseKw(moRows) } };
+        const dates = d.daily.map(x=>x.date).sort();
+        if (dates.length > 0) {
+          const first = dates[0], last = dates[dates.length-1];
+          document.getElementById("datePeriod").textContent = `📅 데이터 기간: ${first} ~ ${last}`;
+        }
         renderCards(daily);
         renderDeviceTable(daily);
         renderCharts(daily);

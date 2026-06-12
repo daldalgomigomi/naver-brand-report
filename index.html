@@ -170,7 +170,7 @@
         const imgUrl = iss.img ? iss.img.replace(/\/view.*$/, "/uc?export=view") : "";
         return `<li>
           ${iss.text}
-          ${imgUrl ? `<img src="${imgUrl}" class="issue-img">` : ""}
+          ${imgUrl ? `<img src="${imgUrl}" style="margin-top:8px;width:300px;max-width:100%;border-radius:8px;border:1px solid #eee;display:block;">` : ""}
         </li>`;
       }).join("");
     }

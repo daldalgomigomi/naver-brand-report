@@ -160,7 +160,7 @@
     }
 
     function parseIssues(rows) {
-      return rows.slice(1).filter(r=>r[1]&&r[1].trim()).map(r=>({ text:r[1], img:r[2]||"" }));
+      return rows.slice(1).filter(r=>r[1]&&r[1].trim()).map(r=>({ text:r[1], img:r[2]||"", img2:r[3]||"" }));
     }
 
     function renderIssues(issues) {
@@ -168,10 +168,17 @@
       document.getElementById("issueBox").style.display="block";
       document.getElementById("issueList").innerHTML = issues.map(iss => {
         const imgUrl = iss.img ? iss.img.replace(/\/view.*$/, "/uc?export=view") : "";
-        return `<li>
-          ${iss.text}
-          ${imgUrl ? `<img src="${imgUrl}" style="margin-top:8px;width:500px;max-width:100%;border-radius:8px;border:1px solid #eee;display:block;">` : ""}
-        </li>`;
+        const imgUrl2 = iss.img2 ? iss.img2.replace(/\/view.*$/, "/uc?export=view") : "";
+        const imgHtml = imgUrl && imgUrl2
+          ? `<div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
+              <img src="${imgUrl}" style="width:500px;max-width:45%;border-radius:8px;border:1px solid #eee">
+              <span style="font-size:20px;color:#888">→</span>
+              <img src="${imgUrl2}" style="width:500px;max-width:45%;border-radius:8px;border:1px solid #eee">
+            </div>`
+          : imgUrl
+          ? `<img src="${imgUrl}" style="margin-top:8px;width:500px;max-width:100%;border-radius:8px;border:1px solid #eee;display:block;">`
+          : "";
+        return `<li style="margin-bottom:12px">${iss.text}${imgHtml}</li>`;
       }).join("");
     }
 

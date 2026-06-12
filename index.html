@@ -39,10 +39,14 @@
     .error-box { background: #fff5f5; border: 1px solid #fca5a5; border-radius: 10px; padding: 12px 16px; color: #dc2626; margin-bottom: 16px; font-size: 13px; }
     .issue-box { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-left: 4px solid #f59e0b; }
     .issue-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
-    .issue-box ol { padding-left: 20px; font-size: 13px; color: #444; line-height: 2; }
-    .issue-box ol li { margin-bottom: 4px; }
-    .issue-img { margin-top: 8px; max-width: 100%; border-radius: 8px; border: 1px solid #eee; display: block; }
-    @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+    .issue-box ol { padding-left: 20px; font-size: 13px; color: #444; line-height: 1.6; }
+    .issue-box ol li { margin-bottom: 6px; }
+    .img-compare { display: flex; align-items: flex-start; gap: 16px; margin-top: 12px; }
+    .img-compare-item { flex: 1; max-width: 600px; }
+    .img-label { font-size: 12px; color: #fff; border-radius: 4px; padding: 2px 8px; display: inline-block; margin-bottom: 6px; font-weight: 600; }
+    .img-compare-item img { width: 100%; border-radius: 8px; border: 1px solid #eee; display: block; }
+    .img-arrow { font-size: 24px; color: #888; padding-top: 30px; }
+    @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } .img-compare { flex-direction: column; } }
   </style>
 </head>
 <body>
@@ -167,24 +171,25 @@
       if (!issues.length) return;
       document.getElementById("issueBox").style.display="block";
       document.getElementById("issueList").innerHTML = issues.map(iss => {
-        const imgUrl = iss.img ? iss.img.replace(/\/view.*$/, "/uc?export=view") : "";
-        const imgUrl2 = iss.img2 ? iss.img2.replace(/\/view.*$/, "/uc?export=view") : "";
-        const imgHtml = imgUrl && imgUrl2
-          ? `<div style="display:flex;align-items:flex-start;gap:16px;margin-top:12px">
-              <div style="flex:1;max-width:600px">
-                <div style="font-size:12px;color:#fff;background:#888;border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:6px;font-weight:600">기존 소재</div>
-                <img src="${imgUrl}" style="width:100%;border-radius:8px;border:1px solid #eee;display:block;">
-              </div>
-              <div style="font-size:24px;color:#888;padding-top:30px">→</div>
-              <div style="flex:1;max-width:600px">
-                <div style="font-size:12px;color:#fff;background:#03C75A;border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:6px;font-weight:600">변경 소재</div>
-                <img src="${imgUrl2}" style="width:100%;border-radius:8px;border:1px solid #eee;display:block;">
-              </div>
-            </div>`
-          : imgUrl
-          ? `<img src="${imgUrl}" style="margin-top:8px;width:500px;max-width:100%;border-radius:8px;border:1px solid #eee;display:block;">`
-          : "";
-        return `<li style="margin-bottom:12px">${iss.text}${imgHtml}</li>`;
+        const imgUrl  = iss.img  ? iss.img.trim().replace(/\/view.*$/, "/uc?export=view")  : "";
+        const imgUrl2 = iss.img2 ? iss.img2.trim().replace(/\/view.*$/, "/uc?export=view") : "";
+        let imgHtml = "";
+        if (imgUrl && imgUrl2) {
+          imgHtml = `<div class="img-compare">
+            <div class="img-compare-item">
+              <span class="img-label" style="background:#888">기존 소재</span>
+              <img src="${imgUrl}">
+            </div>
+            <div class="img-arrow">→</div>
+            <div class="img-compare-item">
+              <span class="img-label" style="background:#03C75A">변경 소재</span>
+              <img src="${imgUrl2}">
+            </div>
+          </div>`;
+        } else if (imgUrl) {
+          imgHtml = `<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
+        }
+        return `<li>${iss.text}${imgHtml}</li>`;
       }).join("");
     }
 

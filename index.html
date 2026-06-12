@@ -8,11 +8,13 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Noto Sans KR', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 20px; }
-    .header { background: linear-gradient(135deg, #03C75A, #00a844); border-radius: 14px; padding: 22px 28px; margin-bottom: 20px; color: #fff; box-shadow: 0 4px 16px rgba(3,199,90,.3); display: flex; justify-content: space-between; align-items: center; }
-    .header h1 { font-size: 22px; font-weight: 800; }
-    .header p { font-size: 13px; opacity: .9; margin-top: 4px; }
+    .header { background: linear-gradient(135deg, #03C75A, #00a844); border-radius: 14px; padding: 22px 28px; margin-bottom: 20px; color: #fff; box-shadow: 0 4px 16px rgba(3,199,90,.3); display: flex; justify-content: space-between; align-items: flex-start; }
+    .header h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .header p { font-size: 13px; opacity: .9; }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
     .refresh-btn { padding: 8px 18px; border-radius: 50px; border: none; background: rgba(255,255,255,.25); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
     .refresh-btn:hover { background: rgba(255,255,255,.4); }
+    .author { font-size: 12px; opacity: .8; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
     .card .icon { font-size: 16px; margin-bottom: 4px; }
@@ -28,16 +30,18 @@
     td:first-child { text-align: center; font-weight: 700; }
     .total-row { background: #f9fffe; font-weight: 700; }
     .chart-wrap { position: relative; height: 200px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab-btn { padding: 9px 18px; border-radius: 50px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; background: #fff; color: #555; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    .tab-btn.active { background: #1a73e8; color: #fff; box-shadow: 0 2px 10px rgba(26,115,232,.4); }
     .kw-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
     .kw-tab { padding: 6px 16px; border-radius: 50px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; background: #f0f0f0; color: #555; }
     .kw-tab.active-pc { background: #1a73e8; color: #fff; }
     .kw-tab.active-mo { background: #03C75A; color: #fff; }
     .badge { display: inline-block; margin-left: 4px; font-size: 10px; border-radius: 3px; padding: 1px 4px; color: #fff; }
     .loading { text-align: center; padding: 60px; background: #fff; border-radius: 14px; color: #888; font-size: 14px; }
-    .error { background: #fff5f5; border: 1px solid #fca5a5; border-radius: 10px; padding: 12px 16px; color: #dc2626; margin-bottom: 16px; font-size: 13px; }
+    .error-box { background: #fff5f5; border: 1px solid #fca5a5; border-radius: 10px; padding: 12px 16px; color: #dc2626; margin-bottom: 16px; font-size: 13px; }
+    .issue-box { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-left: 4px solid #f59e0b; }
+    .issue-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .issue-box ol { padding-left: 20px; font-size: 13px; color: #444; line-height: 2; }
+    .issue-box ol li { margin-bottom: 4px; }
+    .issue-img { margin-top: 8px; max-width: 100%; border-radius: 8px; border: 1px solid #eee; display: block; }
     @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -45,20 +49,27 @@
   <div class="header">
     <div>
       <div style="font-size:11px;opacity:.8;letter-spacing:1px;margin-bottom:4px">NAVER BRAND SEARCH REPORT</div>
-              <h1>자사몰 유입을 위한 네이버 브랜드 검색(키워드 광고) 광고 보고서</h1>
+      <div id="datePeriod" style="font-size:13px;opacity:.9;margin-bottom:4px"></div>
+      <h1>자사몰 유입을 위한 네이버 브랜드 검색(키워드) 광고 보고서</h1>
       <p>빌드앤그로우 · 구글 시트 실시간 연동</p>
-      <p id="datePeriod" style="font-size:13px;opacity:.9;margin-top:2px"></p>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+    <div class="header-right">
       <button class="refresh-btn" onclick="loadAll()">🔄 새로고침</button>
-      <span style="font-size:12px;opacity:.8">디지털마케팅팀_김한솔</span>
+      <span class="author">디지털마케팅팀_김한솔</span>
     </div>
   </div>
 
-  <div id="error" class="error" style="display:none"></div>
+  <div id="errorBox" class="error-box" style="display:none"></div>
   <div id="loading" class="loading">⏳ 데이터를 불러오는 중...</div>
+
   <div id="content" style="display:none">
+    <div id="issueBox" class="issue-box" style="display:none">
+      <h3>⚠️ 이슈사항</h3>
+      <ol id="issueList"></ol>
+    </div>
+
     <div class="cards" id="cards"></div>
+
     <div class="grid2">
       <div class="box">
         <h3>📊 PC / MO 노출 비중</h3>
@@ -69,14 +80,17 @@
         <table id="deviceTable"></table>
       </div>
     </div>
+
     <div class="box" style="margin-bottom:20px">
       <h3>📈 일별 노출수 트렌드</h3>
       <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
     </div>
+
     <div class="box" style="margin-bottom:20px">
       <h3>👆 일별 클릭수 트렌드</h3>
       <div class="chart-wrap"><canvas id="barChart"></canvas></div>
     </div>
+
     <div class="box">
       <h3>🔑 키워드 성과</h3>
       <div class="kw-tabs">
@@ -90,7 +104,7 @@
 
   <script>
     const SHEET_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbf2l-NnX9MxeenHCOQIJMmSpDwM7aVqIcJyxJFCGXG-PkZDX9LvvD5VodkNNhp0CCBtjPxoQjkryy/pub";
-    const GIDS = { daily: "0", kw_pc: "694686318", kw_mo: "1615830362", issues: "513310866" };
+    const GIDS = { daily:"0", kw_pc:"694686318", kw_mo:"1615830362", issues:"513310866" };
     const PC_COLOR = "#1a73e8", MO_COLOR = "#03C75A";
     let charts = {}, allData = {}, kwMode = "pc";
 
@@ -100,7 +114,7 @@
 
     async function fetchCSV(gid) {
       const res = await fetch(`${SHEET_BASE}?gid=${gid}&single=true&output=csv`);
-      if (!res.ok) throw new Error("시트 로드 실패");
+      if (!res.ok) throw new Error("시트 로드 실패 (gid: "+gid+")");
       const text = await res.text();
       return text.trim().split("\n").map(r => {
         const result = []; let cur = "", inQ = false;
@@ -131,7 +145,7 @@
       });
       const daily = Object.values(map).sort((a,b)=>a.date.localeCompare(b.date));
       const pc=records.filter(r=>r.device==="PC"), mo=records.filter(r=>r.device==="MO");
-      const s=(arr,k)=>arr.reduce((s,r)=>s+r[k],0);
+      const s=(arr,k)=>arr.reduce((a,r)=>a+r[k],0);
       return { daily, pcImp:s(pc,"imp"), pcClk:s(pc,"clk"), moImp:s(mo,"imp"), moClk:s(mo,"clk") };
     }
 
@@ -145,22 +159,24 @@
       }));
     }
 
-    function renderIssues(rows) {
-      const issues = rows.filter(r => r[0] && r[1]);
+    function parseIssues(rows) {
+      return rows.filter(r=>r[0]&&r[1]).map(r=>({ num:r[0], text:r[1], img:r[2]||"" }));
+    }
+
+    function renderIssues(issues) {
       if (!issues.length) return;
-      const el = document.getElementById("issueBox");
-      el.style.display = "block";
-      el.querySelector(".issue-list").innerHTML = issues.map(r => {
-        const imgUrl = r[2] ? r[2].replace("view?usp=sharing", "uc?export=view") : "";
-        return `<li style="margin-bottom:${imgUrl?'12px':'4px'}">
-          ${r[1]}
-          ${imgUrl ? `<br><img src="${imgUrl}" style="margin-top:8px;max-width:100%;border-radius:8px;border:1px solid #eee">` : ""}
+      document.getElementById("issueBox").style.display="block";
+      document.getElementById("issueList").innerHTML = issues.map(iss => {
+        const imgUrl = iss.img ? iss.img.replace(/\/view.*$/, "/uc?export=view") : "";
+        return `<li>
+          ${iss.text}
+          ${imgUrl ? `<img src="${imgUrl}" class="issue-img">` : ""}
         </li>`;
       }).join("");
     }
 
     function renderCards(d) {
-      const total = d.pcImp+d.moImp, totalClk = d.pcClk+d.moClk;
+      const total=d.pcImp+d.moImp, totalClk=d.pcClk+d.moClk;
       document.getElementById("cards").innerHTML = [
         {label:"총 노출수",val:fmt(total),color:MO_COLOR,icon:"👁"},
         {label:"총 클릭수",val:fmt(totalClk),color:PC_COLOR,icon:"👆"},
@@ -247,7 +263,7 @@
     async function loadAll() {
       document.getElementById("loading").style.display="block";
       document.getElementById("content").style.display="none";
-      document.getElementById("error").style.display="none";
+      document.getElementById("errorBox").style.display="none";
       try {
         const [dailyRows, pcRows, moRows, issueRows] = await Promise.all([
           fetchCSV(GIDS.daily), fetchCSV(GIDS.kw_pc), fetchCSV(GIDS.kw_mo), fetchCSV(GIDS.issues)
@@ -256,17 +272,21 @@
         allData = { daily, kw:{ pc:parseKw(pcRows), mo:parseKw(moRows) } };
         const dates = daily.daily.map(x=>x.date).sort();
         if (dates.length > 0) {
-          const first = dates[0], last = dates[dates.length-1];
-          document.getElementById("datePeriod").textContent = `📅 ${first} ~ ${last}`;
+          document.getElementById("datePeriod").textContent = `📅 ${dates[0]} ~ ${dates[dates.length-1]}`;
         }
+        renderIssues(parseIssues(issueRows));
         renderCards(daily);
         renderDeviceTable(daily);
         renderCharts(daily);
         renderKw(kwMode);
-        renderIssues(issueRows);
-        renderIssues(issueRows);
         document.getElementById("loading").style.display="none";
         document.getElementById("content").style.display="block";
+      } catch(e) {
+        document.getElementById("loading").style.display="none";
+        document.getElementById("errorBox").style.display="block";
+        document.getElementById("errorBox").textContent="⚠️ "+e.message;
+      }
+    }
 
     loadAll();
   </script>

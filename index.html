@@ -101,6 +101,7 @@
         <button class="kw-tab active-pc" id="pcTab" onclick="switchKw('pc')">💻 PC</button>
         <button class="kw-tab" id="moTab" onclick="switchKw('mo')">📱 MO</button>
       </div>
+      <div id="weekTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"></div>
       <div class="chart-wrap" style="height:250px"><canvas id="kwChart"></canvas></div>
       <table id="kwTable" style="margin-top:16px"></table>
     </div>
@@ -110,7 +111,7 @@
     const SHEET_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbf2l-NnX9MxeenHCOQIJMmSpDwM7aVqIcJyxJFCGXG-PkZDX9LvvD5VodkNNhp0CCBtjPxoQjkryy/pub";
     const GIDS = { daily:"0", kw_pc:"694686318", kw_mo:"1615830362", issues:"513310866" };
     const PC_COLOR = "#1a73e8", MO_COLOR = "#03C75A";
-    let charts = {}, allData = {}, kwMode = "pc";
+    let charts = {}, allData = {}, kwMode = "pc", kwWeek = "전체";
 
     function fmt(n) { return Number(n||0).toLocaleString(); }
     function pct(a,b) { return b>0?((a/b)*100).toFixed(2)+"%" : "0%"; }
@@ -155,12 +156,20 @@
 
     function parseKw(rows) {
       const h = rows[0].map(x=>String(x).trim());
-      const iKw=h.findIndex(x=>x.includes("키워드")), iImp=h.findIndex(x=>x.includes("노출수"));
-      const iClk=h.findIndex(x=>x.includes("클릭수")), iCtr=h.findIndex(x=>x.includes("클릭률"));
-      const iConv=h.findIndex(x=>x.includes("전환"));
-      return rows.slice(1).filter(r=>r[iKw]).map(r=>({
+      const iWeek=h.findIndex(x=>x.includes("주차")), iKw=h.findIndex(x=>x.includes("키워드"));
+      const iImp=h.findIndex(x=>x.includes("노출수")), iClk=h.findIndex(x=>x.includes("클릭수"));
+      const iCtr=h.findIndex(x=>x.includes("클릭률")), iConv=h.findIndex(x=>x.includes("전환"));
+      const data = rows.slice(1).filter(r=>r[iKw]).map(r=>({
+        week: String(r[iWeek]||"").trim(),
         kw:String(r[iKw]), imp:pn(r[iImp]), clk:pn(r[iClk]), ctr:pn(r[iCtr]), conv:pn(r[iConv])
       }));
+      // 주차 목록 추출
+      const weeks = [...new Set(data.map(r=>r.week).filter(w=>w))];
+      // 주차별 그룹핑
+      const byWeek = {};
+      weeks.forEach(w => { byWeek[w] = data.filter(r=>r.week===w); });
+      byWeek["전체"] = data;
+      return { weeks:["전체",...weeks], byWeek };
     }
 
     function parseIssues(rows) {
@@ -247,10 +256,23 @@
       });
     }
 
-    function renderKw(mode) {
-      const kws = [...(allData.kw[mode]||[])].sort((a,b)=>b.clk-a.clk);
+    function renderKw(mode, week) {
+      const kwData = allData.kw[mode];
+      if (!kwData) return;
+      const weeks = kwData.weeks;
+      const kws = [...(kwData.byWeek[week]||[])].sort((a,b)=>b.clk-a.clk);
       const top8 = kws.slice(0,8);
       const color = mode==="pc"?PC_COLOR:MO_COLOR;
+
+      // 주차 탭 렌더링
+      document.getElementById("weekTabs").innerHTML = weeks.map(w=>
+        `<button onclick="switchWeek('${w}')"
+          style="padding:5px 14px;border-radius:50px;border:none;cursor:pointer;font-weight:600;font-size:11px;
+            background:${kwWeek===w?"#f59e0b":"#f0f0f0"};color:${kwWeek===w?"#fff":"#555"}">
+          ${w}
+        </button>`
+      ).join("");
+
       if (charts.kw) charts.kw.destroy();
       charts.kw = new Chart(document.getElementById("kwChart"), {
         type:"bar",
@@ -271,11 +293,16 @@
         </tr>`).join("")}</tbody>`;
     }
 
+    function switchWeek(week) {
+      kwWeek = week;
+      renderKw(kwMode, kwWeek);
+    }
+
     function switchKw(mode) {
       kwMode = mode;
       document.getElementById("pcTab").className = "kw-tab"+(mode==="pc"?" active-pc":"");
       document.getElementById("moTab").className = "kw-tab"+(mode==="mo"?" active-mo":"");
-      renderKw(mode);
+      renderKw(kwMode, kwWeek);
     }
 
     async function loadAll() {
@@ -296,7 +323,7 @@
         renderCards(daily);
         renderDeviceTable(daily);
         renderCharts(daily);
-        renderKw(kwMode);
+        renderKw(kwMode, kwWeek);
         document.getElementById("loading").style.display="none";
         document.getElementById("content").style.display="block";
       } catch(e) {

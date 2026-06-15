@@ -280,7 +280,7 @@
         options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}}}
       });
       document.getElementById("kwTable").innerHTML = `
-        <thead><tr><th style="text-align:left;padding:7px 8px">키워드</th><th>노출수</th><th>클릭수</th><th>CTR</th><th>전환</th></tr></thead>
+        <thead><tr><th style="text-align:left;padding:7px 8px">키워드</th><th>노출수</th><th>클릭수</th><th>CTR</th><th>전환(가입수)</th></tr></thead>
         <tbody>${kws.map((k,i)=>`<tr style="background:${i===0?"#f0f7ff":"#fff"}">
           <td style="text-align:left;padding:7px 8px;font-weight:${i===0?700:400}">
             ${k.kw}

@@ -138,8 +138,8 @@
       const iDate=h.findIndex(x=>x.includes("일별")), iGroup=h.findIndex(x=>x.includes("광고그룹"));
       const iImp=h.findIndex(x=>x.includes("노출수")), iClk=h.findIndex(x=>x.includes("클릭수"));
       const records = rows.slice(1).filter(r=>r[iDate]&&r[iGroup]).map(r => ({
-        date: String(r[iDate]).slice(5).replace(".","/"),
-        device: String(r[iGroup]).endsWith("_PC")?"PC":"MO",
+        date: String(r[iDate]).slice(5).replace(/\./g,"/").replace(/\/$/, ""),
+        device: String(r[iGroup]).includes("_PC")?"PC":"MO",
         imp: pn(r[iImp]), clk: pn(r[iClk])
       }));
       const map = {};

@@ -137,11 +137,17 @@
       const h = rows[0].map(x=>String(x).trim());
       const iDate=h.findIndex(x=>x.includes("일별")), iGroup=h.findIndex(x=>x.includes("광고그룹"));
       const iImp=h.findIndex(x=>x.includes("노출수")), iClk=h.findIndex(x=>x.includes("클릭수"));
-      const records = rows.slice(1).filter(r=>r[iDate]&&r[iGroup]).map(r => ({
-        date: String(r[iDate]).slice(5).replace(/\./g,"/").replace(/\/$/, ""),
-        device: String(r[iGroup]).includes("_PC")?"PC":"MO",
-        imp: pn(r[iImp]), clk: pn(r[iClk])
-      }));
+      const records = rows.slice(1).filter(r=>r[iDate]&&r[iGroup]).map(r => {
+        const raw = String(r[iDate]).trim();
+        // 2026.06.15 또는 2026-06-15 모두 처리
+        const parts = raw.split(/[.\-]/);
+        const date = parts.length >= 3 ? `${parts[1]}/${parts[2]}` : raw;
+        return {
+          date,
+          device: String(r[iGroup]).includes("_PC") ? "PC" : "MO",
+          imp: pn(r[iImp]), clk: pn(r[iClk])
+        };
+      });
       const map = {};
       records.forEach(r => {
         if (!map[r.date]) map[r.date]={date:r.date,pcImp:0,pcClk:0,moImp:0,moClk:0};

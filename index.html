@@ -82,7 +82,7 @@
 
     <div class="cards" id="cards"></div>
 
-    <div class="grid2">
+    <div class="grid2" id="deviceGrid">
       <div class="box">
         <h3>📊 PC / MO 노출 비중</h3>
         <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
@@ -247,9 +247,11 @@
         {label:"총 노출수",val:fmt(total),color:b.pc,icon:"👁"},
         {label:"총 클릭수",val:fmt(totalClk),color:b.pc,icon:"👆"},
         {label:"평균 CTR",val:pct(totalClk,total),color:"#f59e0b",icon:"📊"},
-        {label:"PC 클릭수",val:fmt(d.pcClk),color:b.pc,icon:"💻"},
       ];
-      if (b.hasMo) items.push({label:"MO 클릭수",val:fmt(d.moClk),color:b.mo,icon:"📱"});
+      if (b.hasMo) {
+        items.push({label:"PC 클릭수",val:fmt(d.pcClk),color:b.pc,icon:"💻"});
+        items.push({label:"MO 클릭수",val:fmt(d.moClk),color:b.mo,icon:"📱"});
+      }
       document.getElementById("cards").innerHTML = items.map(c=>`
         <div class="card" style="border-left:4px solid ${c.color}">
           <div class="icon">${c.icon}</div>
@@ -401,6 +403,7 @@
         renderCards(daily, b);
         renderDeviceTable(daily, b);
         renderCharts(daily, b);
+        document.getElementById("deviceGrid").style.display = b.hasMo ? "grid" : "none";
         renderKwTabs(b);
         renderKw(kwMode, kwWeek);
 

@@ -22,6 +22,7 @@
     .card .label { font-size: 11px; color: #888; margin-bottom: 2px; }
     .card .value { font-size: 18px; font-weight: 800; color: #1a1a2e; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
     .box { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
     .box h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -49,7 +50,13 @@
     .kw-summary-item { text-align: center; }
     .kw-summary-item .s-label { font-size: 11px; color: #888; margin-bottom: 2px; }
     .kw-summary-item .s-value { font-size: 16px; font-weight: 800; }
-    @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } .img-compare { flex-direction: column; } }
+    .summary-brand-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    .summary-brand-card .brand-name { font-size: 13px; font-weight: 700; margin-bottom: 14px; padding: 6px 12px; border-radius: 50px; color: #fff; display: inline-block; }
+    .summary-metric { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .summary-metric:last-child { border-bottom: none; }
+    .summary-metric .m-label { color: #888; }
+    .summary-metric .m-value { font-weight: 700; }
+    @media (max-width: 768px) { .grid3 { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } .img-compare { flex-direction: column; } }
   </style>
 </head>
 <body>
@@ -62,6 +69,7 @@
     </div>
     <div class="header-right">
       <select class="brand-select" id="brandSelect" onchange="onBrandChange()">
+        <option value="summary">📊 전체 요약</option>
         <option value="bng">🛒 빌드앤그로우 자사몰</option>
         <option value="ne">📚 엔이능률</option>
         <option value="tutor">🎓 엔이튜터</option>
@@ -74,14 +82,30 @@
   <div id="errorBox" class="error-box" style="display:none"></div>
   <div id="loading" class="loading">⏳ 데이터를 불러오는 중...</div>
 
+  <!-- 전체 요약 페이지 -->
+  <div id="summaryContent" style="display:none">
+    <div class="grid3" id="summaryCards"></div>
+    <div class="box" style="margin-bottom:20px">
+      <h3>📈 브랜드별 일별 노출수 비교</h3>
+      <div class="chart-wrap" style="height:250px"><canvas id="summaryLineChart"></canvas></div>
+    </div>
+    <div class="box" style="margin-bottom:20px">
+      <h3>👆 브랜드별 일별 클릭수 비교</h3>
+      <div class="chart-wrap" style="height:250px"><canvas id="summaryBarChart"></canvas></div>
+    </div>
+    <div class="box">
+      <h3>📋 브랜드별 종합 성과 비교</h3>
+      <table id="summaryTable"></table>
+    </div>
+  </div>
+
+  <!-- 개별 브랜드 페이지 -->
   <div id="content" style="display:none">
     <div id="issueBox" class="issue-box" style="display:none">
       <h3>⚠️ 이슈사항</h3>
       <ol id="issueList"></ol>
     </div>
-
     <div class="cards" id="cards"></div>
-
     <div class="grid2" id="deviceGrid">
       <div class="box">
         <h3>📊 PC / MO 노출 비중</h3>
@@ -92,17 +116,14 @@
         <table id="deviceTable"></table>
       </div>
     </div>
-
     <div class="box" style="margin-bottom:20px">
       <h3>📈 일별 노출수 트렌드</h3>
       <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
     </div>
-
     <div class="box" style="margin-bottom:20px">
       <h3>👆 일별 클릭수 트렌드</h3>
       <div class="chart-wrap"><canvas id="barChart"></canvas></div>
     </div>
-
     <div class="box">
       <h3>🔑 키워드 성과</h3>
       <div class="kw-tabs" id="kwTabs"></div>
@@ -119,45 +140,58 @@
     const BRANDS = {
       bng: {
         name: "네이버 브랜드 검색(키워드) 광고 보고서_자사몰 유입",
-        sub: "빌드앤그로우 자사몰",
+        label: "빌드앤그로우 자사몰",
         gradient: "linear-gradient(135deg, #a855f7, #ec4899)",
         shadow: "rgba(168,85,247,.3)",
         pc: "#a855f7", mo: "#ec4899",
-        daily: "0", kw_pc: "694686318", kw_mo: "1615830362", issues: "513310866",
-        hasConv: true, hasMo: true, hasIssueImg: true,
+        daily:"0", kw_pc:"694686318", kw_mo:"1615830362", issues:"513310866",
+        hasConv:true, hasMo:true, hasIssueImg:true,
       },
       ne: {
         name: "네이버 브랜드 검색(키워드) 광고 보고서_엔이능률 공식홈페이지 유입",
-        sub: "엔이능률",
+        label: "엔이능률",
         gradient: "linear-gradient(135deg, #ef4444, #b91c1c)",
         shadow: "rgba(239,68,68,.3)",
         pc: "#ef4444", mo: "#f97316",
-        daily: "1884349140", kw_pc: "2075995618", kw_mo: "974789792", issues: null,
-        hasConv: false, hasMo: true, hasIssueImg: false,
+        daily:"1884349140", kw_pc:"2075995618", kw_mo:"974789792", issues:null,
+        hasConv:false, hasMo:true, hasIssueImg:false,
       },
       tutor: {
         name: "네이버 브랜드 검색(키워드) 광고 보고서_엔이튜터 유입",
-        sub: "엔이튜터",
+        label: "엔이튜터",
         gradient: "linear-gradient(135deg, #1e3a8a, #1d4ed8)",
         shadow: "rgba(30,58,138,.3)",
         pc: "#1d4ed8", mo: "#eab308",
-        daily: "604847504", kw_pc: "1202029029", kw_mo: null, issues: "399866077",
-        hasConv: false, hasMo: false, hasIssueImg: false,
+        daily:"604847504", kw_pc:"1202029029", kw_mo:null, issues:"399866077",
+        hasConv:false, hasMo:false, hasIssueImg:false,
       },
     };
 
-    let charts = {}, allData = {}, kwMode = "pc", kwWeek = "전체", currentBrand = "bng";
+    const SUMMARY = {
+      name: "네이버 브랜드 검색 보고서_빌드앤그로우 자사몰, 엔이능률, 엔이튜터 요약비교",
+      gradient: "linear-gradient(135deg, #334155, #475569)",
+      shadow: "rgba(51,65,85,.3)",
+    };
+
+    let charts = {}, allData = {}, kwMode = "pc", kwWeek = "전체", currentBrand = "summary";
+    let summaryData = {};
 
     function fmt(n) { return Number(n||0).toLocaleString(); }
     function pct(a,b) { return b>0?((a/b)*100).toFixed(2)+"%" : "0%"; }
     function pn(s) { return parseFloat(String(s||"0").replace(/,/g,""))||0; }
 
-    function applyBrandTheme(brand) {
-      const b = BRANDS[brand];
+    function applyTheme(brand) {
       const h = document.getElementById("header");
-      h.style.background = b.gradient;
-      h.style.boxShadow = `0 4px 16px ${b.shadow}`;
-      document.getElementById("reportTitle").textContent = b.name;
+      if (brand === "summary") {
+        h.style.background = SUMMARY.gradient;
+        h.style.boxShadow = `0 4px 16px ${SUMMARY.shadow}`;
+        document.getElementById("reportTitle").textContent = SUMMARY.name;
+      } else {
+        const b = BRANDS[brand];
+        h.style.background = b.gradient;
+        h.style.boxShadow = `0 4px 16px ${b.shadow}`;
+        document.getElementById("reportTitle").textContent = b.name;
+      }
     }
 
     async function fetchCSV(gid) {
@@ -183,8 +217,8 @@
       const records = rows.slice(1).filter(r=>r[iDate]&&r[iGroup]).map(r => {
         const raw = String(r[iDate]).trim();
         const parts = raw.split(/[.\-]/);
-        const date = parts.length >= 3 ? `${parts[1]}/${parts[2]}` : raw;
-        return { date, device: String(r[iGroup]).includes("_PC")?"PC":"MO", imp:pn(r[iImp]), clk:pn(r[iClk]) };
+        const date = parts.length>=3 ? `${parts[1]}/${parts[2]}` : raw;
+        return { date, device:String(r[iGroup]).includes("_PC")?"PC":"MO", imp:pn(r[iImp]), clk:pn(r[iClk]) };
       });
       const map = {};
       records.forEach(r => {
@@ -207,11 +241,11 @@
         week:String(r[iWeek]||"").trim(), kw:String(r[iKw]),
         imp:pn(r[iImp]), clk:pn(r[iClk]), ctr:pn(r[iCtr]), conv:iConv>=0?pn(r[iConv]):0
       }));
-      const weeks = [...new Set(data.map(r=>r.week).filter(w=>w))];
-      const byWeek = {};
-      weeks.forEach(w => { byWeek[w] = data.filter(r=>r.week===w); });
-      byWeek["전체"] = data;
-      return { weeks:["전체",...weeks], byWeek };
+      const weeks=[...new Set(data.map(r=>r.week).filter(w=>w))];
+      const byWeek={};
+      weeks.forEach(w=>{byWeek[w]=data.filter(r=>r.week===w);});
+      byWeek["전체"]=data;
+      return {weeks:["전체",...weeks],byWeek};
     }
 
     function parseIssues(rows, hasImg) {
@@ -220,196 +254,261 @@
       }));
     }
 
+    // ── 요약 렌더 ──────────────────────────────────────
+    function renderSummary() {
+      const keys = ["bng","ne","tutor"];
+
+      // 브랜드별 카드
+      document.getElementById("summaryCards").innerHTML = keys.map(k => {
+        const b = BRANDS[k];
+        const d = summaryData[k];
+        if (!d) return `<div class="summary-brand-card"><span class="brand-name" style="background:${b.pc}">${b.label}</span><p style="color:#aaa;font-size:13px">데이터 없음</p></div>`;
+        const totalImp = d.pcImp+(b.hasMo?d.moImp:0);
+        const totalClk = d.pcClk+(b.hasMo?d.moClk:0);
+        return `<div class="summary-brand-card">
+          <span class="brand-name" style="background:${b.gradient}">${b.label}</span>
+          <div class="summary-metric"><span class="m-label">총 노출수</span><span class="m-value" style="color:${b.pc}">${fmt(totalImp)}</span></div>
+          <div class="summary-metric"><span class="m-label">총 클릭수</span><span class="m-value" style="color:${b.pc}">${fmt(totalClk)}</span></div>
+          <div class="summary-metric"><span class="m-label">평균 CTR</span><span class="m-value" style="color:#f59e0b">${pct(totalClk,totalImp)}</span></div>
+        </div>`;
+      }).join("");
+
+      // 공통 날짜 축 (모든 브랜드 날짜 합집합)
+      const allDates = [...new Set(keys.flatMap(k=>(summaryData[k]?.daily||[]).map(d=>d.date)))].sort();
+
+      const getVal = (k, date, field) => {
+        const d = (summaryData[k]?.daily||[]).find(x=>x.date===date);
+        return d ? (d[field]||0) : 0;
+      };
+
+      // 노출수 라인차트
+      if (charts.sLine) charts.sLine.destroy();
+      charts.sLine = new Chart(document.getElementById("summaryLineChart"), {
+        type:"line",
+        data:{
+          labels: allDates,
+          datasets: keys.map(k=>({
+            label: BRANDS[k].label,
+            data: allDates.map(date => getVal(k,date,"pcImp")+(BRANDS[k].hasMo?getVal(k,date,"moImp"):0)),
+            borderColor: BRANDS[k].pc,
+            backgroundColor: BRANDS[k].pc+"22",
+            tension:.3, fill:false, pointRadius:3,
+          }))
+        },
+        options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
+      });
+
+      // 클릭수 바차트
+      if (charts.sBar) charts.sBar.destroy();
+      charts.sBar = new Chart(document.getElementById("summaryBarChart"), {
+        type:"bar",
+        data:{
+          labels: allDates,
+          datasets: keys.map(k=>({
+            label: BRANDS[k].label,
+            data: allDates.map(date => getVal(k,date,"pcClk")+(BRANDS[k].hasMo?getVal(k,date,"moClk"):0)),
+            backgroundColor: BRANDS[k].pc,
+          }))
+        },
+        options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
+      });
+
+      // 종합 테이블
+      document.getElementById("summaryTable").innerHTML = `
+        <thead><tr>
+          <th style="text-align:left">브랜드</th>
+          <th>총 노출수</th><th>총 클릭수</th><th>평균 CTR</th>
+        </tr></thead>
+        <tbody>${keys.map(k=>{
+          const b=BRANDS[k], d=summaryData[k];
+          const totalImp=d?(d.pcImp+(b.hasMo?d.moImp:0)):0;
+          const totalClk=d?(d.pcClk+(b.hasMo?d.moClk:0)):0;
+          return `<tr>
+            <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${b.pc};margin-right:6px"></span><strong>${b.label}</strong></td>
+            <td>${fmt(totalImp)}</td>
+            <td>${fmt(totalClk)}</td>
+            <td style="color:#f59e0b;font-weight:700">${pct(totalClk,totalImp)}</td>
+          </tr>`;
+        }).join("")}</tbody>`;
+    }
+
+    // ── 개별 브랜드 렌더 ──────────────────────────────
     function renderIssues(issues, hasImg) {
-      const box = document.getElementById("issueBox");
-      if (!issues||!issues.length) { box.style.display="none"; return; }
+      const box=document.getElementById("issueBox");
+      if (!issues||!issues.length){box.style.display="none";return;}
       box.style.display="block";
-      document.getElementById("issueList").innerHTML = issues.map(iss => {
-        const imgUrl  = iss.img  ? iss.img.trim().replace(/\/view.*$/, "/uc?export=view")  : "";
-        const imgUrl2 = iss.img2 ? iss.img2.trim().replace(/\/view.*$/, "/uc?export=view") : "";
-        let imgHtml = "";
-        if (hasImg && imgUrl && imgUrl2) {
-          imgHtml = `<div class="img-compare">
+      document.getElementById("issueList").innerHTML=issues.map(iss=>{
+        const imgUrl=iss.img?iss.img.trim().replace(/\/view.*$/,"/uc?export=view"):"";
+        const imgUrl2=iss.img2?iss.img2.trim().replace(/\/view.*$/,"/uc?export=view"):"";
+        let imgHtml="";
+        if(hasImg&&imgUrl&&imgUrl2){
+          imgHtml=`<div class="img-compare">
             <div class="img-compare-item"><span class="img-label" style="background:#888">기존 소재</span><img src="${imgUrl}"></div>
             <div class="img-arrow">→</div>
             <div class="img-compare-item"><span class="img-label" style="background:#a855f7">변경 소재</span><img src="${imgUrl2}"></div>
           </div>`;
-        } else if (hasImg && imgUrl) {
-          imgHtml = `<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
+        } else if(hasImg&&imgUrl){
+          imgHtml=`<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
         }
         return `<li>${iss.text}${imgHtml}</li>`;
       }).join("");
     }
 
-    function renderCards(d, b) {
-      const total=d.pcImp+(b.hasMo?d.moImp:0), totalClk=d.pcClk+(b.hasMo?d.moClk:0);
-      const items = [
+    function renderCards(d,b){
+      const total=d.pcImp+(b.hasMo?d.moImp:0),totalClk=d.pcClk+(b.hasMo?d.moClk:0);
+      const items=[
         {label:"총 노출수",val:fmt(total),color:b.pc,icon:"👁"},
         {label:"총 클릭수",val:fmt(totalClk),color:b.pc,icon:"👆"},
         {label:"평균 CTR",val:pct(totalClk,total),color:"#f59e0b",icon:"📊"},
       ];
-      if (b.hasMo) {
+      if(b.hasMo){
         items.push({label:"PC 클릭수",val:fmt(d.pcClk),color:b.pc,icon:"💻"});
         items.push({label:"MO 클릭수",val:fmt(d.moClk),color:b.mo,icon:"📱"});
       }
-      document.getElementById("cards").innerHTML = items.map(c=>`
+      document.getElementById("cards").innerHTML=items.map(c=>`
         <div class="card" style="border-left:4px solid ${c.color}">
-          <div class="icon">${c.icon}</div>
-          <div class="label">${c.label}</div>
-          <div class="value">${c.val}</div>
+          <div class="icon">${c.icon}</div><div class="label">${c.label}</div><div class="value">${c.val}</div>
         </div>`).join("");
     }
 
-    function renderDeviceTable(d, b) {
-      const total=d.pcImp+(b.hasMo?d.moImp:0), totalClk=d.pcClk+(b.hasMo?d.moClk:0);
-      const moRow = b.hasMo ? `<tr><td style="color:${b.mo}">📱 MO</td><td>${fmt(d.moImp)}</td><td>${fmt(d.moClk)}</td><td>${pct(d.moClk,d.moImp)}</td></tr>` : "";
-      document.getElementById("deviceTable").innerHTML = `
+    function renderDeviceTable(d,b){
+      const total=d.pcImp+(b.hasMo?d.moImp:0),totalClk=d.pcClk+(b.hasMo?d.moClk:0);
+      const moRow=b.hasMo?`<tr><td style="color:${b.mo}">📱 MO</td><td>${fmt(d.moImp)}</td><td>${fmt(d.moClk)}</td><td>${pct(d.moClk,d.moImp)}</td></tr>`:"";
+      document.getElementById("deviceTable").innerHTML=`
         <thead><tr><th>구분</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead>
         <tbody>
           <tr><td style="color:${b.pc}">💻 PC</td><td>${fmt(d.pcImp)}</td><td>${fmt(d.pcClk)}</td><td>${pct(d.pcClk,d.pcImp)}</td></tr>
           ${moRow}
-          <tr class="total-row" style="background:#f9f5ff"><td>합계</td><td>${fmt(total)}</td><td>${fmt(totalClk)}</td><td>${pct(totalClk,total)}</td></tr>
+          <tr class="total-row"><td>합계</td><td>${fmt(total)}</td><td>${fmt(totalClk)}</td><td>${pct(totalClk,total)}</td></tr>
         </tbody>`;
     }
 
-    function renderCharts(d, b) {
-      if (charts.pie) charts.pie.destroy();
-      if (charts.line) charts.line.destroy();
-      if (charts.bar) charts.bar.destroy();
-      const pieData = b.hasMo
-        ? {labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[b.pc,b.mo]}]}
-        : {labels:["PC"],datasets:[{data:[d.pcImp],backgroundColor:[b.pc]}]};
-      charts.pie = new Chart(document.getElementById("pieChart"),{type:"doughnut",data:pieData,options:{plugins:{legend:{position:"bottom"}},maintainAspectRatio:false}});
+    function renderCharts(d,b){
+      if(charts.pie)charts.pie.destroy();
+      if(charts.line)charts.line.destroy();
+      if(charts.bar)charts.bar.destroy();
+      const pieData=b.hasMo
+        ?{labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[b.pc,b.mo]}]}
+        :{labels:["PC"],datasets:[{data:[d.pcImp],backgroundColor:[b.pc]}]};
+      charts.pie=new Chart(document.getElementById("pieChart"),{type:"doughnut",data:pieData,options:{plugins:{legend:{position:"bottom"}},maintainAspectRatio:false}});
       const labels=d.daily.map(x=>x.date);
       const lineDS=[{label:"PC 노출",data:d.daily.map(x=>x.pcImp),borderColor:b.pc,backgroundColor:b.pc+"22",tension:.3,fill:true}];
-      if(b.hasMo) lineDS.push({label:"MO 노출",data:d.daily.map(x=>x.moImp),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
+      if(b.hasMo)lineDS.push({label:"MO 노출",data:d.daily.map(x=>x.moImp),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
       charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
       const barDS=[{label:"PC 클릭",data:d.daily.map(x=>x.pcClk),backgroundColor:b.pc}];
-      if(b.hasMo) barDS.push({label:"MO 클릭",data:d.daily.map(x=>x.moClk),backgroundColor:b.mo});
+      if(b.hasMo)barDS.push({label:"MO 클릭",data:d.daily.map(x=>x.moClk),backgroundColor:b.mo});
       charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
     }
 
-    function renderKwTabs(b) {
-      let tabs = `<button class="kw-tab" id="pcTab" onclick="switchKw('pc')" style="background:${kwMode==='pc'?b.pc:'#f0f0f0'};color:${kwMode==='pc'?'#fff':'#555'}">💻 PC</button>`;
-      if (b.hasMo) tabs += `<button class="kw-tab" id="moTab" onclick="switchKw('mo')" style="background:${kwMode==='mo'?b.mo:'#f0f0f0'};color:${kwMode==='mo'?'#fff':'#555'}">📱 MO</button>`;
-      document.getElementById("kwTabs").innerHTML = tabs;
+    function renderKwTabs(b){
+      let tabs=`<button class="kw-tab" id="pcTab" onclick="switchKw('pc')" style="background:${kwMode==='pc'?b.pc:'#f0f0f0'};color:${kwMode==='pc'?'#fff':'#555'}">💻 PC</button>`;
+      if(b.hasMo)tabs+=`<button class="kw-tab" id="moTab" onclick="switchKw('mo')" style="background:${kwMode==='mo'?b.mo:'#f0f0f0'};color:${kwMode==='mo'?'#fff':'#555'}">📱 MO</button>`;
+      document.getElementById("kwTabs").innerHTML=tabs;
     }
 
-    function renderKw(mode, week) {
-      const b = BRANDS[currentBrand];
-      const kwData = allData.kw[mode];
-      if (!kwData) return;
-      const kws = [...(kwData.byWeek[week]||[])].sort((a,b)=>b.clk-a.clk);
-      const top8 = kws.slice(0,8);
-      const color = mode==="pc"?b.pc:b.mo;
-
-      // 주차 탭
-      document.getElementById("weekTabs").innerHTML = kwData.weeks.map(w=>
-        `<button onclick="switchWeek('${w}')" style="padding:5px 14px;border-radius:50px;border:none;cursor:pointer;font-weight:600;font-size:11px;background:${kwWeek===w?'#f59e0b':'#f0f0f0'};color:${kwWeek===w?'#fff':'#555'}">${w}</button>`
+    function renderKw(mode,week){
+      const b=BRANDS[currentBrand];
+      const kwData=allData.kw[mode];
+      if(!kwData)return;
+      const kws=[...(kwData.byWeek[week]||[])].sort((a,b)=>b.clk-a.clk);
+      const top8=kws.slice(0,8);
+      const color=mode==="pc"?b.pc:b.mo;
+      document.getElementById("weekTabs").innerHTML=kwData.weeks.map(w=>
+        `<button onclick="switchWeek('${w}')" style="padding:5px 14px;border-radius:50px;border:none;cursor:pointer;font-weight:600;font-size:11px;background:${kwWeek===w?"#f59e0b":"#f0f0f0"};color:${kwWeek===w?"#fff":"#555"}">${w}</button>`
       ).join("");
-
-      // 합계 (빌드앤그로우만)
-      const summaryEl = document.getElementById("kwSummary");
-      if (b.hasConv) {
-        const totalImp = kws.reduce((s,k)=>s+k.imp,0);
-        const totalClk = kws.reduce((s,k)=>s+k.clk,0);
-        const totalConv = kws.reduce((s,k)=>s+k.conv,0);
+      const summaryEl=document.getElementById("kwSummary");
+      if(b.hasConv){
+        const tImp=kws.reduce((s,k)=>s+k.imp,0),tClk=kws.reduce((s,k)=>s+k.clk,0),tConv=kws.reduce((s,k)=>s+k.conv,0);
         summaryEl.style.display="grid";
-        summaryEl.innerHTML = [
-          {label:"총 노출수",val:fmt(totalImp),color:b.pc},
-          {label:"총 클릭수",val:fmt(totalClk),color:b.pc},
-          {label:"평균 CTR",val:pct(totalClk,totalImp),color:"#f59e0b"},
-          {label:"총 전환(가입수)",val:fmt(totalConv),color:"#f59e0b"},
-        ].map(c=>`<div class="kw-summary-item">
-          <div class="s-label">${c.label}</div>
-          <div class="s-value" style="color:${c.color}">${c.val}</div>
-        </div>`).join("");
-      } else {
-        summaryEl.style.display="none";
-      }
-
-      if (charts.kw) charts.kw.destroy();
-      charts.kw = new Chart(document.getElementById("kwChart"),{
-        type:"bar",
-        data:{labels:top8.map(k=>k.kw),datasets:[{label:"클릭수",data:top8.map(k=>k.clk),backgroundColor:color}]},
+        summaryEl.innerHTML=[
+          {label:"총 노출수",val:fmt(tImp),color:b.pc},
+          {label:"총 클릭수",val:fmt(tClk),color:b.pc},
+          {label:"평균 CTR",val:pct(tClk,tImp),color:"#f59e0b"},
+          {label:"총 전환(가입수)",val:fmt(tConv),color:"#f59e0b"},
+        ].map(c=>`<div class="kw-summary-item"><div class="s-label">${c.label}</div><div class="s-value" style="color:${c.color}">${c.val}</div></div>`).join("");
+      } else summaryEl.style.display="none";
+      if(charts.kw)charts.kw.destroy();
+      charts.kw=new Chart(document.getElementById("kwChart"),{
+        type:"bar",data:{labels:top8.map(k=>k.kw),datasets:[{label:"클릭수",data:top8.map(k=>k.clk),backgroundColor:color}]},
         options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}}}
       });
-
-      const convHeader = b.hasConv ? "<th style='min-width:90px'>전환(가입수)</th>" : "";
-      document.getElementById("kwTable").innerHTML = `
-        <thead><tr>
-          <th style="text-align:left;padding:7px 8px;min-width:120px">키워드</th>
-          <th style="min-width:70px">노출수</th>
-          <th style="min-width:70px">클릭수</th>
-          <th style="min-width:70px">CTR</th>
-          ${convHeader}
-        </tr></thead>
+      const convHeader=b.hasConv?"<th style='min-width:90px'>전환(가입수)</th>":"";
+      document.getElementById("kwTable").innerHTML=`
+        <thead><tr><th style="text-align:left;padding:7px 8px;min-width:120px">키워드</th><th style="min-width:70px">노출수</th><th style="min-width:70px">클릭수</th><th style="min-width:70px">CTR</th>${convHeader}</tr></thead>
         <tbody>${kws.map((k,i)=>{
-          const convCell = b.hasConv ? `<td style="color:${k.conv>0?"#f59e0b":"#ccc"};font-weight:${k.conv>0?700:400}">${k.conv>0?k.conv:"-"}</td>` : "";
+          const convCell=b.hasConv?`<td style="color:${k.conv>0?"#f59e0b":"#ccc"};font-weight:${k.conv>0?700:400}">${k.conv>0?k.conv:"-"}</td>`:"";
           return `<tr style="background:${i===0?"#f5f0ff":"#fff"}">
-            <td style="text-align:left;padding:7px 8px;font-weight:${i===0?700:400}">
-              ${k.kw}
-              ${i===0?`<span class="badge" style="background:${color}">TOP</span>`:""}
-              ${k.conv>0?`<span class="badge" style="background:#f59e0b">전환</span>`:""}
-            </td>
-            <td>${fmt(k.imp)}</td>
-            <td><strong>${fmt(k.clk)}</strong></td>
-            <td>${k.ctr.toFixed(2)}%</td>
-            ${convCell}
+            <td style="text-align:left;padding:7px 8px;font-weight:${i===0?700:400}">${k.kw}${i===0?`<span class="badge" style="background:${color}">TOP</span>`:""}${k.conv>0?`<span class="badge" style="background:#f59e0b">전환</span>`:""}</td>
+            <td>${fmt(k.imp)}</td><td><strong>${fmt(k.clk)}</strong></td><td>${k.ctr.toFixed(2)}%</td>${convCell}
           </tr>`;
         }).join("")}</tbody>`;
     }
 
-    function switchKw(mode) {
-      kwMode = mode;
+    function switchKw(mode){
+      kwMode=mode;
       renderKwTabs(BRANDS[currentBrand]);
-      renderKw(kwMode, kwWeek);
+      renderKw(kwMode,kwWeek);
     }
 
-    function switchWeek(week) {
-      kwWeek = week;
-      renderKw(kwMode, kwWeek);
+    function switchWeek(week){
+      kwWeek=week;
+      renderKw(kwMode,kwWeek);
     }
 
-    function onBrandChange() {
-      currentBrand = document.getElementById("brandSelect").value;
-      kwMode = "pc"; kwWeek = "전체";
+    function onBrandChange(){
+      currentBrand=document.getElementById("brandSelect").value;
+      kwMode="pc"; kwWeek="전체";
       loadAll();
     }
 
-    async function loadAll() {
+    async function loadAll(){
       document.getElementById("loading").style.display="block";
       document.getElementById("content").style.display="none";
+      document.getElementById("summaryContent").style.display="none";
       document.getElementById("errorBox").style.display="none";
       document.getElementById("issueBox").style.display="none";
-
-      const b = BRANDS[currentBrand];
-      applyBrandTheme(currentBrand);
+      applyTheme(currentBrand);
 
       try {
-        const [dailyRows, pcRows, moRows, issueRows] = await Promise.all([
-          fetchCSV(b.daily),
-          fetchCSV(b.kw_pc),
-          b.hasMo ? fetchCSV(b.kw_mo) : Promise.resolve(null),
-          b.issues ? fetchCSV(b.issues) : Promise.resolve(null),
-        ]);
-        const daily = parseDaily(dailyRows);
-        allData = { daily, kw:{ pc:parseKw(pcRows,b.hasConv), mo:moRows?parseKw(moRows,b.hasConv):null } };
-
-        const dates = daily.daily.map(x=>x.date).sort();
-        document.getElementById("datePeriod").textContent = dates.length>0 ? `📅 ${dates[0]} ~ ${dates[dates.length-1]}` : "";
-
-        if (issueRows) renderIssues(parseIssues(issueRows,b.hasIssueImg), b.hasIssueImg);
-        renderCards(daily, b);
-        renderDeviceTable(daily, b);
-        renderCharts(daily, b);
-        document.getElementById("deviceGrid").style.display = b.hasMo ? "grid" : "none";
-        renderKwTabs(b);
-        renderKw(kwMode, kwWeek);
-
-        document.getElementById("loading").style.display="none";
-        document.getElementById("content").style.display="block";
-      } catch(e) {
+        if (currentBrand === "summary") {
+          // 3개 브랜드 daily 동시 로드
+          const [bngRows, neRows, tutorRows] = await Promise.all([
+            fetchCSV(BRANDS.bng.daily),
+            fetchCSV(BRANDS.ne.daily),
+            fetchCSV(BRANDS.tutor.daily),
+          ]);
+          summaryData = {
+            bng: parseDaily(bngRows),
+            ne: parseDaily(neRows),
+            tutor: parseDaily(tutorRows),
+          };
+          document.getElementById("datePeriod").textContent = "";
+          document.getElementById("loading").style.display="none";
+          document.getElementById("summaryContent").style.display="block";
+          renderSummary();
+        } else {
+          const b=BRANDS[currentBrand];
+          const [dailyRows,pcRows,moRows,issueRows]=await Promise.all([
+            fetchCSV(b.daily),
+            fetchCSV(b.kw_pc),
+            b.hasMo?fetchCSV(b.kw_mo):Promise.resolve(null),
+            b.issues?fetchCSV(b.issues):Promise.resolve(null),
+          ]);
+          const daily=parseDaily(dailyRows);
+          allData={daily,kw:{pc:parseKw(pcRows,b.hasConv),mo:moRows?parseKw(moRows,b.hasConv):null}};
+          const dates=daily.daily.map(x=>x.date).sort();
+          document.getElementById("datePeriod").textContent=dates.length>0?`📅 ${dates[0]} ~ ${dates[dates.length-1]}`:"";
+          if(issueRows)renderIssues(parseIssues(issueRows,b.hasIssueImg),b.hasIssueImg);
+          renderCards(daily,b);
+          renderDeviceTable(daily,b);
+          renderCharts(daily,b);
+          document.getElementById("deviceGrid").style.display=b.hasMo?"grid":"none";
+          renderKwTabs(b);
+          renderKw(kwMode,kwWeek);
+          document.getElementById("loading").style.display="none";
+          document.getElementById("content").style.display="block";
+        }
+      } catch(e){
         document.getElementById("loading").style.display="none";
         document.getElementById("errorBox").style.display="block";
         document.getElementById("errorBox").textContent="⚠️ "+e.message;

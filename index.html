@@ -283,10 +283,10 @@
       const labels=d.daily.map(x=>x.date);
       const lineDS=[{label:"PC 노출",data:d.daily.map(x=>x.pcImp),borderColor:b.pc,backgroundColor:b.pc+"22",tension:.3,fill:true}];
       if(b.hasMo) lineDS.push({label:"MO 노출",data:d.daily.map(x=>x.moImp),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
-      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
       const barDS=[{label:"PC 클릭",data:d.daily.map(x=>x.pcClk),backgroundColor:b.pc}];
       if(b.hasMo) barDS.push({label:"MO 클릭",data:d.daily.map(x=>x.moClk),backgroundColor:b.mo});
-      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
     }
 
     function renderKwTabs(b) {

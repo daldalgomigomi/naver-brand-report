@@ -14,6 +14,7 @@
     .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
     .refresh-btn { padding: 8px 18px; border-radius: 50px; border: none; background: rgba(255,255,255,.25); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
     .refresh-btn:hover { background: rgba(255,255,255,.4); }
+    .brand-select { padding: 8px 14px; border-radius: 50px; border: none; background: rgba(255,255,255,.9); color: #333; font-weight: 700; font-size: 13px; cursor: pointer; outline: none; }
     .author { font-size: 12px; opacity: .8; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
@@ -30,7 +31,7 @@
     td:first-child { text-align: left; font-weight: 700; }
     .total-row { background: #f9fffe; font-weight: 700; }
     .chart-wrap { position: relative; height: 200px; }
-    .kw-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .kw-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
     .kw-tab { padding: 6px 16px; border-radius: 50px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; background: #f0f0f0; color: #555; }
     .kw-tab.active-pc { background: #1a73e8; color: #fff; }
     .kw-tab.active-mo { background: #03C75A; color: #fff; }
@@ -55,9 +56,14 @@
       <div style="font-size:11px;opacity:.8;letter-spacing:1px;margin-bottom:4px">NAVER BRAND SEARCH REPORT</div>
       <div id="datePeriod" style="font-size:13px;opacity:.9;margin-bottom:4px"></div>
       <h1>자사몰 유입을 위한 네이버 브랜드 검색(키워드) 광고 보고서</h1>
-      <p>빌드앤그로우 · 구글 시트 실시간 연동</p>
+      <p>구글 시트 실시간 연동</p>
     </div>
     <div class="header-right">
+      <select class="brand-select" id="brandSelect" onchange="onBrandChange()">
+        <option value="bng">🛒 빌드앤그로우 자사몰</option>
+        <option value="ne">📚 엔이능률</option>
+        <option value="tutor">🎓 엔이튜터</option>
+      </select>
       <button class="refresh-btn" onclick="loadAll()">🔄 새로고침</button>
       <span class="author">디지털마케팅팀_김한솔</span>
     </div>
@@ -97,10 +103,7 @@
 
     <div class="box">
       <h3>🔑 키워드 성과</h3>
-      <div class="kw-tabs">
-        <button class="kw-tab active-pc" id="pcTab" onclick="switchKw('pc')">💻 PC</button>
-        <button class="kw-tab" id="moTab" onclick="switchKw('mo')">📱 MO</button>
-      </div>
+      <div class="kw-tabs" id="kwTabs"></div>
       <div id="weekTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"></div>
       <div class="chart-wrap" style="height:250px"><canvas id="kwChart"></canvas></div>
       <table id="kwTable" style="margin-top:16px"></table>
@@ -109,9 +112,40 @@
 
   <script>
     const SHEET_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbf2l-NnX9MxeenHCOQIJMmSpDwM7aVqIcJyxJFCGXG-PkZDX9LvvD5VodkNNhp0CCBtjPxoQjkryy/pub";
-    const GIDS = { daily:"0", kw_pc:"694686318", kw_mo:"1615830362", issues:"513310866" };
+
+    const BRANDS = {
+      bng: {
+        name: "빌드앤그로우 자사몰",
+        daily:    "0",
+        kw_pc:    "694686318",
+        kw_mo:    "1615830362",
+        issues:   "513310866",
+        hasConv:  true,
+        hasMo:    true,
+      },
+      ne: {
+        name: "엔이능률",
+        daily:    "1884349140",
+        kw_pc:    "2075995618",
+        kw_mo:    "974789792",
+        issues:   null,
+        hasConv:  false,
+        hasMo:    true,
+      },
+      tutor: {
+        name: "엔이튜터",
+        daily:    "604847504",
+        kw_pc:    "1202029029",
+        kw_mo:    null,
+        issues:   "399866077",
+        hasConv:  false,
+        hasMo:    false,
+      },
+    };
+
     const PC_COLOR = "#1a73e8", MO_COLOR = "#03C75A";
     let charts = {}, allData = {}, kwMode = "pc", kwWeek = "전체";
+    let currentBrand = "bng";
 
     function fmt(n) { return Number(n||0).toLocaleString(); }
     function pct(a,b) { return b>0?((a/b)*100).toFixed(2)+"%" : "0%"; }
@@ -139,7 +173,6 @@
       const iImp=h.findIndex(x=>x.includes("노출수")), iClk=h.findIndex(x=>x.includes("클릭수"));
       const records = rows.slice(1).filter(r=>r[iDate]&&r[iGroup]).map(r => {
         const raw = String(r[iDate]).trim();
-        // 2026.06.15 또는 2026-06-15 모두 처리
         const parts = raw.split(/[.\-]/);
         const date = parts.length >= 3 ? `${parts[1]}/${parts[2]}` : raw;
         return {
@@ -160,36 +193,39 @@
       return { daily, pcImp:s(pc,"imp"), pcClk:s(pc,"clk"), moImp:s(mo,"imp"), moClk:s(mo,"clk") };
     }
 
-    function parseKw(rows) {
+    function parseKw(rows, hasConv) {
       const h = rows[0].map(x=>String(x).trim());
       const iWeek=h.findIndex(x=>x.includes("주차")), iKw=h.findIndex(x=>x.includes("키워드"));
       const iImp=h.findIndex(x=>x.includes("노출수")), iClk=h.findIndex(x=>x.includes("클릭수"));
-      const iCtr=h.findIndex(x=>x.includes("클릭률")), iConv=h.findIndex(x=>x.includes("전환"));
+      const iCtr=h.findIndex(x=>x.includes("클릭률"));
+      const iConv=hasConv?h.findIndex(x=>x.includes("전환")):-1;
       const data = rows.slice(1).filter(r=>r[iKw]).map(r=>({
         week: String(r[iWeek]||"").trim(),
-        kw:String(r[iKw]), imp:pn(r[iImp]), clk:pn(r[iClk]), ctr:pn(r[iCtr]), conv:pn(r[iConv])
+        kw:String(r[iKw]), imp:pn(r[iImp]), clk:pn(r[iClk]), ctr:pn(r[iCtr]),
+        conv: iConv>=0?pn(r[iConv]):0
       }));
-      // 주차 목록 추출
       const weeks = [...new Set(data.map(r=>r.week).filter(w=>w))];
-      // 주차별 그룹핑
       const byWeek = {};
       weeks.forEach(w => { byWeek[w] = data.filter(r=>r.week===w); });
       byWeek["전체"] = data;
       return { weeks:["전체",...weeks], byWeek };
     }
 
-    function parseIssues(rows) {
-      return rows.slice(1).filter(r=>r[1]&&r[1].trim()).map(r=>({ text:r[1], img:r[2]||"", img2:r[3]||"" }));
+    function parseIssues(rows, hasImg) {
+      return rows.slice(1).filter(r=>r[1]&&r[1].trim()).map(r=>({
+        text:r[1], img:hasImg?(r[2]||""):"", img2:hasImg?(r[3]||""):""
+      }));
     }
 
-    function renderIssues(issues) {
-      if (!issues.length) return;
-      document.getElementById("issueBox").style.display="block";
+    function renderIssues(issues, hasImg) {
+      const box = document.getElementById("issueBox");
+      if (!issues.length) { box.style.display="none"; return; }
+      box.style.display="block";
       document.getElementById("issueList").innerHTML = issues.map(iss => {
         const imgUrl  = iss.img  ? iss.img.trim().replace(/\/view.*$/, "/uc?export=view")  : "";
         const imgUrl2 = iss.img2 ? iss.img2.trim().replace(/\/view.*$/, "/uc?export=view") : "";
         let imgHtml = "";
-        if (imgUrl && imgUrl2) {
+        if (hasImg && imgUrl && imgUrl2) {
           imgHtml = `<div class="img-compare">
             <div class="img-compare-item">
               <span class="img-label" style="background:#888">기존 소재</span>
@@ -201,108 +237,130 @@
               <img src="${imgUrl2}">
             </div>
           </div>`;
-        } else if (imgUrl) {
+        } else if (hasImg && imgUrl) {
           imgHtml = `<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
         }
         return `<li>${iss.text}${imgHtml}</li>`;
       }).join("");
     }
 
-    function renderCards(d) {
-      const total=d.pcImp+d.moImp, totalClk=d.pcClk+d.moClk;
-      document.getElementById("cards").innerHTML = [
+    function renderCards(d, hasMo) {
+      const total=d.pcImp+(hasMo?d.moImp:0), totalClk=d.pcClk+(hasMo?d.moClk:0);
+      const items = [
         {label:"총 노출수",val:fmt(total),color:MO_COLOR,icon:"👁"},
         {label:"총 클릭수",val:fmt(totalClk),color:PC_COLOR,icon:"👆"},
         {label:"평균 CTR",val:pct(totalClk,total),color:"#f59e0b",icon:"📊"},
         {label:"PC 클릭수",val:fmt(d.pcClk),color:PC_COLOR,icon:"💻"},
-        {label:"MO 클릭수",val:fmt(d.moClk),color:MO_COLOR,icon:"📱"},
-      ].map(c=>`<div class="card" style="border-left:4px solid ${c.color}">
-        <div class="icon">${c.icon}</div>
-        <div class="label">${c.label}</div>
-        <div class="value">${c.val}</div>
-      </div>`).join("");
+      ];
+      if (hasMo) items.push({label:"MO 클릭수",val:fmt(d.moClk),color:MO_COLOR,icon:"📱"});
+      document.getElementById("cards").innerHTML = items.map(c=>`
+        <div class="card" style="border-left:4px solid ${c.color}">
+          <div class="icon">${c.icon}</div>
+          <div class="label">${c.label}</div>
+          <div class="value">${c.val}</div>
+        </div>`).join("");
     }
 
-    function renderDeviceTable(d) {
-      const total=d.pcImp+d.moImp, totalClk=d.pcClk+d.moClk;
+    function renderDeviceTable(d, hasMo) {
+      const total=d.pcImp+(hasMo?d.moImp:0), totalClk=d.pcClk+(hasMo?d.moClk:0);
+      const moRow = hasMo ? `<tr><td style="color:${MO_COLOR}">📱 MO</td><td>${fmt(d.moImp)}</td><td>${fmt(d.moClk)}</td><td>${pct(d.moClk,d.moImp)}</td></tr>` : "";
       document.getElementById("deviceTable").innerHTML = `
         <thead><tr><th>구분</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead>
         <tbody>
           <tr><td style="color:${PC_COLOR}">💻 PC</td><td>${fmt(d.pcImp)}</td><td>${fmt(d.pcClk)}</td><td>${pct(d.pcClk,d.pcImp)}</td></tr>
-          <tr><td style="color:${MO_COLOR}">📱 MO</td><td>${fmt(d.moImp)}</td><td>${fmt(d.moClk)}</td><td>${pct(d.moClk,d.moImp)}</td></tr>
+          ${moRow}
           <tr class="total-row"><td>합계</td><td>${fmt(total)}</td><td>${fmt(totalClk)}</td><td style="color:${MO_COLOR}">${pct(totalClk,total)}</td></tr>
         </tbody>`;
     }
 
-    function renderCharts(d) {
+    function renderCharts(d, hasMo) {
       if (charts.pie) charts.pie.destroy();
       if (charts.line) charts.line.destroy();
       if (charts.bar) charts.bar.destroy();
+      const pieData = hasMo
+        ? {labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[PC_COLOR,MO_COLOR]}]}
+        : {labels:["PC"],datasets:[{data:[d.pcImp],backgroundColor:[PC_COLOR]}]};
       charts.pie = new Chart(document.getElementById("pieChart"), {
-        type:"doughnut",
-        data:{labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[PC_COLOR,MO_COLOR]}]},
+        type:"doughnut", data:pieData,
         options:{plugins:{legend:{position:"bottom"}},maintainAspectRatio:false}
       });
       const labels=d.daily.map(x=>x.date);
+      const lineDatasets = [
+        {label:"PC 노출",data:d.daily.map(x=>x.pcImp),borderColor:PC_COLOR,backgroundColor:PC_COLOR+"22",tension:.3,fill:true}
+      ];
+      if (hasMo) lineDatasets.push({label:"MO 노출",data:d.daily.map(x=>x.moImp),borderColor:MO_COLOR,backgroundColor:MO_COLOR+"22",tension:.3,fill:true});
       charts.line = new Chart(document.getElementById("lineChart"), {
-        type:"line",
-        data:{labels,datasets:[
-          {label:"PC 노출",data:d.daily.map(x=>x.pcImp),borderColor:PC_COLOR,backgroundColor:PC_COLOR+"22",tension:.3,fill:true},
-          {label:"MO 노출",data:d.daily.map(x=>x.moImp),borderColor:MO_COLOR,backgroundColor:MO_COLOR+"22",tension:.3,fill:true}
-        ]},
+        type:"line", data:{labels,datasets:lineDatasets},
         options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
       });
+      const barDatasets = [
+        {label:"PC 클릭",data:d.daily.map(x=>x.pcClk),backgroundColor:PC_COLOR}
+      ];
+      if (hasMo) barDatasets.push({label:"MO 클릭",data:d.daily.map(x=>x.moClk),backgroundColor:MO_COLOR});
       charts.bar = new Chart(document.getElementById("barChart"), {
-        type:"bar",
-        data:{labels,datasets:[
-          {label:"PC 클릭",data:d.daily.map(x=>x.pcClk),backgroundColor:PC_COLOR},
-          {label:"MO 클릭",data:d.daily.map(x=>x.moClk),backgroundColor:MO_COLOR}
-        ]},
+        type:"bar", data:{labels,datasets:barDatasets},
         options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
       });
+    }
+
+    function renderKwTabs(hasMo) {
+      const tabs = `<button class="kw-tab active-pc" id="pcTab" onclick="switchKw('pc')">💻 PC</button>`;
+      const moTab = hasMo ? `<button class="kw-tab" id="moTab" onclick="switchKw('mo')">📱 MO</button>` : "";
+      document.getElementById("kwTabs").innerHTML = tabs + moTab;
+      if (!hasMo) kwMode = "pc";
     }
 
     function renderKw(mode, week) {
       const kwData = allData.kw[mode];
       if (!kwData) return;
-      const weeks = kwData.weeks;
+      const brand = BRANDS[currentBrand];
       const kws = [...(kwData.byWeek[week]||[])].sort((a,b)=>b.clk-a.clk);
       const top8 = kws.slice(0,8);
       const color = mode==="pc"?PC_COLOR:MO_COLOR;
-
-      // 주차 탭 렌더링
-      document.getElementById("weekTabs").innerHTML = weeks.map(w=>
+      document.getElementById("weekTabs").innerHTML = kwData.weeks.map(w=>
         `<button onclick="switchWeek('${w}')"
           style="padding:5px 14px;border-radius:50px;border:none;cursor:pointer;font-weight:600;font-size:11px;
             background:${kwWeek===w?"#f59e0b":"#f0f0f0"};color:${kwWeek===w?"#fff":"#555"}">
           ${w}
         </button>`
       ).join("");
-
       if (charts.kw) charts.kw.destroy();
       charts.kw = new Chart(document.getElementById("kwChart"), {
         type:"bar",
         data:{labels:top8.map(k=>k.kw),datasets:[{label:"클릭수",data:top8.map(k=>k.clk),backgroundColor:color}]},
         options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}}}
       });
+      const convHeader = brand.hasConv ? "<th style='min-width:90px'>전환(가입수)</th>" : "";
       document.getElementById("kwTable").innerHTML = `
         <thead><tr>
           <th style="text-align:left;padding:7px 8px;min-width:120px">키워드</th>
           <th style="min-width:70px">노출수</th>
           <th style="min-width:70px">클릭수</th>
           <th style="min-width:70px">CTR</th>
-          <th style="min-width:90px">전환(가입수)</th>
+          ${convHeader}
         </tr></thead>
-        <tbody>${kws.map((k,i)=>`<tr style="background:${i===0?"#f0f7ff":"#fff"}">
-          <td style="text-align:left;padding:7px 8px;font-weight:${i===0?700:400}">
-            ${k.kw}
-            ${i===0?`<span class="badge" style="background:${color}">TOP</span>`:""}
-            ${k.conv>0?`<span class="badge" style="background:#f59e0b">전환</span>`:""}
-          </td>
-          <td>${fmt(k.imp)}</td><td><strong>${fmt(k.clk)}</strong></td>
-          <td>${k.ctr.toFixed(2)}%</td>
-          <td style="color:${k.conv>0?"#f59e0b":"#ccc"}">${k.conv>0?k.conv:"-"}</td>
-        </tr>`).join("")}</tbody>`;
+        <tbody>${kws.map((k,i)=>{
+          const convCell = brand.hasConv ? `<td style="color:${k.conv>0?"#f59e0b":"#ccc"};font-weight:${k.conv>0?700:400}">${k.conv>0?k.conv:"-"}</td>` : "";
+          return `<tr style="background:${i===0?"#f0f7ff":"#fff"}">
+            <td style="text-align:left;padding:7px 8px;font-weight:${i===0?700:400}">
+              ${k.kw}
+              ${i===0?`<span class="badge" style="background:${color}">TOP</span>`:""}
+              ${k.conv>0?`<span class="badge" style="background:#f59e0b">전환</span>`:""}
+            </td>
+            <td>${fmt(k.imp)}</td>
+            <td><strong>${fmt(k.clk)}</strong></td>
+            <td>${k.ctr.toFixed(2)}%</td>
+            ${convCell}
+          </tr>`;
+        }).join("")}</tbody>`;
+    }
+
+    function switchKw(mode) {
+      kwMode = mode;
+      const hasMo = BRANDS[currentBrand].hasMo;
+      if (document.getElementById("pcTab")) document.getElementById("pcTab").className = "kw-tab"+(mode==="pc"?" active-pc":"");
+      if (hasMo && document.getElementById("moTab")) document.getElementById("moTab").className = "kw-tab"+(mode==="mo"?" active-mo":"");
+      renderKw(kwMode, kwWeek);
     }
 
     function switchWeek(week) {
@@ -310,32 +368,43 @@
       renderKw(kwMode, kwWeek);
     }
 
-    function switchKw(mode) {
-      kwMode = mode;
-      document.getElementById("pcTab").className = "kw-tab"+(mode==="pc"?" active-pc":"");
-      document.getElementById("moTab").className = "kw-tab"+(mode==="mo"?" active-mo":"");
-      renderKw(kwMode, kwWeek);
+    function onBrandChange() {
+      currentBrand = document.getElementById("brandSelect").value;
+      kwMode = "pc"; kwWeek = "전체";
+      loadAll();
     }
 
     async function loadAll() {
       document.getElementById("loading").style.display="block";
       document.getElementById("content").style.display="none";
       document.getElementById("errorBox").style.display="none";
+      document.getElementById("issueBox").style.display="none";
+
+      const brand = BRANDS[currentBrand];
       try {
-        const [dailyRows, pcRows, moRows, issueRows] = await Promise.all([
-          fetchCSV(GIDS.daily), fetchCSV(GIDS.kw_pc), fetchCSV(GIDS.kw_mo), fetchCSV(GIDS.issues)
-        ]);
+        const fetches = [
+          fetchCSV(brand.daily),
+          fetchCSV(brand.kw_pc),
+          brand.hasMo ? fetchCSV(brand.kw_mo) : Promise.resolve(null),
+          brand.issues ? fetchCSV(brand.issues) : Promise.resolve(null),
+        ];
+        const [dailyRows, pcRows, moRows, issueRows] = await Promise.all(fetches);
+
         const daily = parseDaily(dailyRows);
-        allData = { daily, kw:{ pc:parseKw(pcRows), mo:parseKw(moRows) } };
+        const kwPc = parseKw(pcRows, brand.hasConv);
+        const kwMo = moRows ? parseKw(moRows, brand.hasConv) : null;
+        allData = { daily, kw:{ pc:kwPc, mo:kwMo } };
+
         const dates = daily.daily.map(x=>x.date).sort();
-        if (dates.length > 0) {
-          document.getElementById("datePeriod").textContent = `📅 ${dates[0]} ~ ${dates[dates.length-1]}`;
-        }
-        renderIssues(parseIssues(issueRows));
-        renderCards(daily);
-        renderDeviceTable(daily);
-        renderCharts(daily);
+        document.getElementById("datePeriod").textContent = dates.length > 0 ? `📅 ${dates[0]} ~ ${dates[dates.length-1]}` : "";
+
+        if (issueRows) renderIssues(parseIssues(issueRows, brand===BRANDS.bng), brand===BRANDS.bng);
+        renderCards(daily, brand.hasMo);
+        renderDeviceTable(daily, brand.hasMo);
+        renderCharts(daily, brand.hasMo);
+        renderKwTabs(brand.hasMo);
         renderKw(kwMode, kwWeek);
+
         document.getElementById("loading").style.display="none";
         document.getElementById("content").style.display="block";
       } catch(e) {

@@ -264,8 +264,8 @@
         } else if(tableMode){
           // 완전 빈 행이면 테이블 종료
           if(!b&&!c&&!d&&!e&&!f){flushTable();return;}
-          // A열에 숫자가 있으면 테이블 종료 후 텍스트로 처리
-          if(a&&!isNaN(Number(a))){
+          // A열에 1이상의 숫자가 있으면 테이블 종료 후 텍스트로 처리
+          if(a && a!=="0" && !isNaN(Number(a)) && Number(a)>=1){
             flushTable();
             if(b) issues.push({type:"text",text:b,img:hasImg?c:"",img2:hasImg?d:""});
             return;

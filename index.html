@@ -376,11 +376,13 @@
               <tbody>${iss.rows.map((row,i)=>{
                 const isTotal = String(row[0]).includes("합계");
                 if (isTotal) {
-                  const dataCells = row.slice(1).map(cell=>
+                  const nonEmptyCells = row.filter(c=>c&&c!=="-");
+                  const dataCells = nonEmptyCells.slice(1).map(cell=>
                     `<td style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700;white-space:nowrap">${cell}</td>`
                   ).join("");
+                  const colspan = iss.headers.length - (nonEmptyCells.length - 1);
                   return `<tr style="background:#f9fffe">
-                    <td colspan="2" style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700">합계</td>
+                    <td colspan="${colspan}" style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700">합계</td>
                     ${dataCells}
                   </tr>`;
                 }

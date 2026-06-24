@@ -16,9 +16,9 @@
     .refresh-btn:hover { background: rgba(255,255,255,.4); }
     .author { font-size: 12px; opacity: .8; }
     .brand-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .brand-tab { padding: 10px 24px; border-radius: 50px; border: 2px solid transparent; cursor: pointer; font-weight: 700; font-size: 13px; background: #fff; color: #555; box-shadow: 0 1px 4px rgba(0,0,0,.1); transition: all .2s; }
-    .brand-tab:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.15); }
-    .brand-tab.active { color: #fff; border-color: transparent; }
+    .brand-tab { padding: 8px 18px; border-radius: 50px; border: 2px solid rgba(255,255,255,.4); cursor: pointer; font-weight: 700; font-size: 12px; background: rgba(255,255,255,.15); color: #fff; transition: all .2s; }
+    .brand-tab:hover { background: rgba(255,255,255,.3); }
+    .brand-tab.active { background: #fff; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
     .card .icon { font-size: 16px; margin-bottom: 4px; }
@@ -72,13 +72,13 @@
       <p>구글 시트 실시간 연동</p>
     </div>
     <div class="header-right">
+      <div class="brand-tabs" id="brandTabs" style="margin-bottom:0"></div>
       <button class="refresh-btn" onclick="loadAll()">🔄 새로고침</button>
       <span class="author">디지털마케팅팀_김한솔</span>
     </div>
   </div>
 
-  <!-- 브랜드 탭 버튼 -->
-  <div class="brand-tabs" id="brandTabs"></div>
+  <!-- 브랜드 탭 버튼 제거 (헤더 안으로 이동) -->
 
   <div id="errorBox" class="error-box" style="display:none"></div>
   <div id="loading" class="loading">⏳ 데이터를 불러오는 중...</div>
@@ -136,10 +136,9 @@
       ];
       var html = tabs.map(function(t) {
         var isActive = currentBrand === t.id;
-        var bg = isActive ? t.cfg.gradient : "#fff";
-        var color = isActive ? "#fff" : "#555";
-        var shadow = isActive ? "0 3px 10px " + t.cfg.shadow : "0 1px 4px rgba(0,0,0,.1)";
-        return "<button class='brand-tab"+(isActive?" active":"")+"' onclick=\"switchBrand('"+t.id+"')\" style='background:"+bg+";color:"+color+";box-shadow:"+shadow+"'>"+t.label+"</button>";
+        var bg = isActive ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.15)";
+        var color = isActive ? t.cfg.pc || "#334155" : "#fff";
+        return "<button class='brand-tab"+(isActive?" active":"")+"' onclick=\"switchBrand('"+t.id+"')\" style='background:"+bg+";color:"+color+"'>"+t.label+"</button>";
       }).join("");
       document.getElementById("brandTabs").innerHTML = html;
     }

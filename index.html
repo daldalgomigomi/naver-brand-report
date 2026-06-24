@@ -371,7 +371,7 @@
       document.getElementById("issueList").innerHTML = issues.map(iss => {
         if (iss.type === "table") {
           return `<li style="list-style:none;margin-top:12px;margin-bottom:16px">
-            <table style="width:50%;border-collapse:collapse;font-size:13px">
+            <table style="width:35%;border-collapse:collapse;font-size:13px">
               <thead><tr style="background:#f8f9fa">${iss.headers.map(h=>`<th style="padding:8px 20px;text-align:center;font-weight:600;color:#555;border-bottom:2px solid #eee;white-space:nowrap">${h}</th>`).join("")}</tr></thead>
               <tbody>${iss.rows.map((row,i)=>{
                 const isTotal = String(row[0]).includes("합계");
@@ -380,6 +380,7 @@
                     const isPC = cell==="PC", isMO = cell==="MO";
                     const color = isPC?"#1a73e8":isMO?"#03C75A":"inherit";
                     const fw = isPC||isMO||isTotal ? 700 : 400;
+                    const align = isTotal && cell === "합계" ? "center" : "center";
                     return `<td style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;color:${color};font-weight:${fw};white-space:nowrap">${cell}</td>`;
                   }).join("")}
                 </tr>`;

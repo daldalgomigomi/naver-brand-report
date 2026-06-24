@@ -261,17 +261,23 @@
       };
 
       rows.slice(1).forEach(r => {
-        const a = String(r[0]||"").trim();
-        const b = String(r[1]||"").trim();
+        const a = String(r[0]||"").trim(); // A열: 번호 or "table"
+        const b = String(r[1]||"").trim(); // B열: 내용 or 날짜
+        const c = String(r[2]||"").trim(); // C열: 이미지URL or 디바이스
+        const d = String(r[3]||"").trim(); // D열: 비교이미지URL or 구매건수
+        const e = String(r[4]||"").trim(); // E열: 구매금액
+
         if (a === "table") {
           if (tableMode) flushTable();
           tableMode = true;
-          tableHeaders = [b, String(r[2]||"").trim(), String(r[3]||"").trim(), String(r[4]||"").trim()].filter(x=>x);
-        } else if (tableMode && (b || String(r[2]||"").trim())) {
-          tableRows.push([b, String(r[2]||"").trim(), String(r[3]||"").trim(), String(r[4]||"").trim()]);
+          // B~E열이 헤더
+          tableHeaders = [b, c, d, e].filter(x=>x);
+        } else if (tableMode) {
+          // 빈 행이면 테이블 종료
+          if (!b && !c && !d && !e) { flushTable(); return; }
+          tableRows.push([b, c, d, e].slice(0, tableHeaders.length));
         } else {
-          if (tableMode) flushTable();
-          if (b) issues.push({ type:"text", text:b, img:hasImg?(r[2]||""):"", img2:hasImg?(r[3]||""):"" });
+          if (b) issues.push({ type:"text", text:b, img:hasImg?c:"", img2:hasImg?d:"" });
         }
       });
       if (tableMode) flushTable();
@@ -364,17 +370,17 @@
       let num = 1;
       document.getElementById("issueList").innerHTML = issues.map(iss => {
         if (iss.type === "table") {
-          return `<li style="list-style:none;margin-top:12px">
-            <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:8px">📋 ${iss.headers[0]||""}</div>
+          return `<li style="list-style:none;margin-top:12px;margin-bottom:16px">
             <table style="width:100%;border-collapse:collapse;font-size:13px">
-              <thead><tr style="background:#f8f9fa">${iss.headers.slice(1).map(h=>`<th style="padding:8px;text-align:center;font-weight:600;color:#555;border-bottom:2px solid #eee">${h}</th>`).join("")}</tr></thead>
+              <thead><tr style="background:#f8f9fa">${iss.headers.map(h=>`<th style="padding:8px 12px;text-align:center;font-weight:600;color:#555;border-bottom:2px solid #eee">${h}</th>`).join("")}</tr></thead>
               <tbody>${iss.rows.map((row,i)=>{
                 const isTotal = String(row[0]).includes("합계");
                 return `<tr style="background:${isTotal?"#f9fffe":i%2===0?"#fff":"#fafafa"};font-weight:${isTotal?700:400}">
-                  ${row.slice(1).map((cell,ci)=>{
+                  ${row.map((cell)=>{
                     const isPC = cell==="PC", isMO = cell==="MO";
                     const color = isPC?"#1a73e8":isMO?"#03C75A":"inherit";
-                    return `<td style="padding:8px;text-align:center;border-bottom:1px solid #f0f0f0;color:${color};font-weight:${isPC||isMO?700:isTotal?700:400}">${cell}</td>`;
+                    const fw = isPC||isMO||isTotal ? 700 : 400;
+                    return `<td style="padding:8px 12px;text-align:center;border-bottom:1px solid #f0f0f0;color:${color};font-weight:${fw}">${cell}</td>`;
                   }).join("")}
                 </tr>`;
               }).join("")}</tbody>

@@ -249,9 +249,33 @@
     }
 
     function parseIssues(rows, hasImg) {
-      return rows.slice(1).filter(r=>r[1]&&r[1].trim()).map(r=>({
-        text:r[1], img:hasImg?(r[2]||""):"", img2:hasImg?(r[3]||""):""
-      }));
+      const issues = [];
+      let tableMode = false, tableHeaders = [], tableRows = [];
+
+      const flushTable = () => {
+        if (tableHeaders.length) {
+          issues.push({ type:"table", headers:tableHeaders, rows:[...tableRows] });
+          tableHeaders = []; tableRows = [];
+        }
+        tableMode = false;
+      };
+
+      rows.slice(1).forEach(r => {
+        const a = String(r[0]||"").trim();
+        const b = String(r[1]||"").trim();
+        if (a === "table") {
+          if (tableMode) flushTable();
+          tableMode = true;
+          tableHeaders = [b, String(r[2]||"").trim(), String(r[3]||"").trim(), String(r[4]||"").trim()].filter(x=>x);
+        } else if (tableMode && (b || String(r[2]||"").trim())) {
+          tableRows.push([b, String(r[2]||"").trim(), String(r[3]||"").trim(), String(r[4]||"").trim()]);
+        } else {
+          if (tableMode) flushTable();
+          if (b) issues.push({ type:"text", text:b, img:hasImg?(r[2]||""):"", img2:hasImg?(r[3]||""):"" });
+        }
+      });
+      if (tableMode) flushTable();
+      return issues;
     }
 
     // ── 요약 렌더 ──────────────────────────────────────
@@ -337,20 +361,40 @@
       const box=document.getElementById("issueBox");
       if (!issues||!issues.length){box.style.display="none";return;}
       box.style.display="block";
-      document.getElementById("issueList").innerHTML=issues.map(iss=>{
-        const imgUrl=iss.img?iss.img.trim().replace(/\/view.*$/,"/uc?export=view"):"";
-        const imgUrl2=iss.img2?iss.img2.trim().replace(/\/view.*$/,"/uc?export=view"):"";
-        let imgHtml="";
-        if(hasImg&&imgUrl&&imgUrl2){
-          imgHtml=`<div class="img-compare">
-            <div class="img-compare-item"><span class="img-label" style="background:#888">기존 소재</span><img src="${imgUrl}"></div>
-            <div class="img-arrow">→</div>
-            <div class="img-compare-item"><span class="img-label" style="background:#a855f7">변경 소재</span><img src="${imgUrl2}"></div>
-          </div>`;
-        } else if(hasImg&&imgUrl){
-          imgHtml=`<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
+      let num = 1;
+      document.getElementById("issueList").innerHTML = issues.map(iss => {
+        if (iss.type === "table") {
+          return `<li style="list-style:none;margin-top:12px">
+            <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:8px">📋 ${iss.headers[0]||""}</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead><tr style="background:#f8f9fa">${iss.headers.slice(1).map(h=>`<th style="padding:8px;text-align:center;font-weight:600;color:#555;border-bottom:2px solid #eee">${h}</th>`).join("")}</tr></thead>
+              <tbody>${iss.rows.map((row,i)=>{
+                const isTotal = String(row[0]).includes("합계");
+                return `<tr style="background:${isTotal?"#f9fffe":i%2===0?"#fff":"#fafafa"};font-weight:${isTotal?700:400}">
+                  ${row.slice(1).map((cell,ci)=>{
+                    const isPC = cell==="PC", isMO = cell==="MO";
+                    const color = isPC?"#1a73e8":isMO?"#03C75A":"inherit";
+                    return `<td style="padding:8px;text-align:center;border-bottom:1px solid #f0f0f0;color:${color};font-weight:${isPC||isMO?700:isTotal?700:400}">${cell}</td>`;
+                  }).join("")}
+                </tr>`;
+              }).join("")}</tbody>
+            </table>
+          </li>`;
+        } else {
+          const imgUrl=iss.img?iss.img.trim().replace(/\/view.*$/,"/uc?export=view"):"";
+          const imgUrl2=iss.img2?iss.img2.trim().replace(/\/view.*$/,"/uc?export=view"):"";
+          let imgHtml="";
+          if(hasImg&&imgUrl&&imgUrl2){
+            imgHtml=`<div class="img-compare">
+              <div class="img-compare-item"><span class="img-label" style="background:#888">기존 소재</span><img src="${imgUrl}"></div>
+              <div class="img-arrow">→</div>
+              <div class="img-compare-item"><span class="img-label" style="background:#a855f7">변경 소재</span><img src="${imgUrl2}"></div>
+            </div>`;
+          } else if(hasImg&&imgUrl){
+            imgHtml=`<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
+          }
+          return `<li>${iss.text}${imgHtml}</li>`;
         }
-        return `<li>${iss.text}${imgHtml}</li>`;
       }).join("");
     }
 

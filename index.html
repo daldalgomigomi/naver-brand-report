@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>네이버 브랜드 검색 보고서</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Noto Sans KR', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 20px; }
@@ -371,16 +372,40 @@
       document.getElementById("deviceTable").innerHTML="<thead><tr><th>구분</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead><tbody><tr><td style='color:"+b.pc+"'>💻 PC</td><td>"+fmt(d.pcImp)+"</td><td>"+fmt(d.pcClk)+"</td><td>"+pct(d.pcClk,d.pcImp)+"</td></tr>"+moRow+"<tr style='font-weight:700'><td>합계</td><td>"+fmt(total)+"</td><td>"+fmt(totalClk)+"</td><td>"+pct(totalClk,total)+"</td></tr></tbody>";
     }
 
+    function getAnnotation(labels) {
+      var idx = labels.indexOf("06/12");
+      if (idx < 0) return {};
+      return {
+        annotations: {
+          offLabel: {
+            type: "line",
+            xMin: idx, xMax: idx,
+            borderColor: "rgba(220,38,38,0.4)",
+            borderWidth: 1,
+            borderDash: [4,4],
+            label: {
+              display: true,
+              content: "재계약으로 1일 OFF",
+              color: "#dc2626",
+              backgroundColor: "rgba(255,255,255,0.85)",
+              font: { size: 11, weight: "bold" },
+              position: "start"
+            }
+          }
+        }
+      };
+    }
+
     function renderCharts(d,b){
       if(charts.pie)charts.pie.destroy();if(charts.line)charts.line.destroy();if(charts.bar)charts.bar.destroy();
       charts.pie=new Chart(document.getElementById("pieChart"),{type:"doughnut",data:b.hasMo?{labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[b.pc,b.mo]}]}:{labels:["PC"],datasets:[{data:[d.pcImp],backgroundColor:[b.pc]}]},options:{plugins:{legend:{position:"bottom"}},maintainAspectRatio:false}});
       var labels=d.daily.map(function(x){return x.date;});
       var lineDS=[{label:"PC 노출",data:d.daily.map(function(x){return x.pcImp;}),borderColor:b.pc,backgroundColor:b.pc+"22",tension:.3,fill:true}];
       if(b.hasMo)lineDS.push({label:"MO 노출",data:d.daily.map(function(x){return x.moImp;}),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
-      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
+      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo},annotation:getAnnotation(labels)}}});
       var barDS=[{label:"PC 클릭",data:d.daily.map(function(x){return x.pcClk;}),backgroundColor:b.pc}];
       if(b.hasMo)barDS.push({label:"MO 클릭",data:d.daily.map(function(x){return x.moClk;}),backgroundColor:b.mo});
-      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels:labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
+      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels:labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo},annotation:getAnnotation(labels)}}});
     }
 
     function renderKwTabs(b){

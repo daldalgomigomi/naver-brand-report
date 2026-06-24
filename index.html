@@ -217,12 +217,12 @@
           // A열에 값 있으면 종료 후 텍스트 처리
           if(a!==""){
             flushTable();
-            if(b) issues.push({type:"text",text:b,img:hasImg?c:"",img2:hasImg?d:""});
+            if(b) issues.push({type:"text",text:b,arrow:false,img:hasImg?c:"",img2:hasImg?d:""});
             return;
           }
           tableRows.push([b,c,d,e,f].slice(0,tableHeaders.length));
         } else {
-          if(b) issues.push({type:"text",text:b,img:hasImg?c:"",img2:hasImg?d:""});
+          if(b) issues.push({type:"text",text:b,arrow:a==="→",img:hasImg?c:"",img2:hasImg?d:""});
         }
       });
       if(tableMode)flushTable();
@@ -285,8 +285,8 @@
           } else if(hasImg&&imgUrl){
             imgHtml=`<img src="${imgUrl}" style="margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;">`;
           }
-          num++;
-          const div=document.createElement("div");
+          const prefix = iss.arrow ? "→ " : `${num++}. `;
+          if(!iss.arrow) num;
           div.className="issue-text";
           div.innerHTML=`${num}. ${iss.text}${imgHtml}`;
           container.appendChild(div);

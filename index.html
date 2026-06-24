@@ -351,9 +351,9 @@
       allDates.sort();
       function gv(k,date,f){var d=(summaryData[k]&&summaryData[k].daily||[]).find(function(x){return x.date===date;});return d?(d[f]||0):0;}
       if(charts.sLine)charts.sLine.destroy();
-      charts.sLine=new Chart(document.getElementById("summaryLineChart"),{type:"line",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcImp")+(BRANDS[k].hasMo?gv(k,date,"moImp"):0);}),borderColor:BRANDS[k].pc,backgroundColor:BRANDS[k].pc+"22",tension:.3,fill:false,pointRadius:3};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+      charts.sLine=new Chart(document.getElementById("summaryLineChart"),{type:"line",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcImp")+(BRANDS[k].hasMo?gv(k,date,"moImp"):0);}),borderColor:BRANDS[k].pc,backgroundColor:BRANDS[k].pc+"22",tension:.3,fill:false,pointRadius:3};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},annotation:getAnnotation(allDates,"자사몰 광고 재계약으로 1일 OFF")}}});
       if(charts.sBar)charts.sBar.destroy();
-      charts.sBar=new Chart(document.getElementById("summaryBarChart"),{type:"bar",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcClk")+(BRANDS[k].hasMo?gv(k,date,"moClk"):0);}),backgroundColor:BRANDS[k].pc};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+      charts.sBar=new Chart(document.getElementById("summaryBarChart"),{type:"bar",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcClk")+(BRANDS[k].hasMo?gv(k,date,"moClk"):0);}),backgroundColor:BRANDS[k].pc};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},annotation:getAnnotation(allDates,"자사몰 광고 재계약으로 1일 OFF")}}});
       var tHtml="<thead><tr><th style='text-align:left'>브랜드</th><th>총 노출수</th><th>총 클릭수</th><th>평균 CTR</th></tr></thead><tbody>";
       keys.forEach(function(k){var b=BRANDS[k],d=summaryData[k],tI=d?(d.pcImp+(b.hasMo?d.moImp:0)):0,tC=d?(d.pcClk+(b.hasMo?d.moClk:0)):0;tHtml+="<tr><td><span style='display:inline-block;width:10px;height:10px;border-radius:50%;background:"+b.pc+";margin-right:6px'></span><strong>"+b.label+"</strong></td><td>"+fmt(tI)+"</td><td>"+fmt(tC)+"</td><td style='color:#f59e0b;font-weight:700'>"+pct(tC,tI)+"</td></tr>";});
       document.getElementById("summaryTable").innerHTML=tHtml+"</tbody>";
@@ -372,9 +372,10 @@
       document.getElementById("deviceTable").innerHTML="<thead><tr><th>구분</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead><tbody><tr><td style='color:"+b.pc+"'>💻 PC</td><td>"+fmt(d.pcImp)+"</td><td>"+fmt(d.pcClk)+"</td><td>"+pct(d.pcClk,d.pcImp)+"</td></tr>"+moRow+"<tr style='font-weight:700'><td>합계</td><td>"+fmt(total)+"</td><td>"+fmt(totalClk)+"</td><td>"+pct(totalClk,total)+"</td></tr></tbody>";
     }
 
-    function getAnnotation(labels) {
+    function getAnnotation(labels, text) {
       var idx = labels.indexOf("06/12");
       if (idx < 0) return {};
+      var label = text || "재계약으로 1일 OFF";
       return {
         annotations: {
           offLabel: {
@@ -385,7 +386,7 @@
             borderDash: [4,4],
             label: {
               display: true,
-              content: "재계약으로 1일 OFF",
+              content: label,
               color: "#dc2626",
               backgroundColor: "rgba(255,255,255,0.85)",
               font: { size: 11, weight: "bold" },

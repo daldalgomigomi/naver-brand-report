@@ -8,13 +8,17 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Noto Sans KR', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 20px; }
-    .header { border-radius: 14px; padding: 22px 28px; margin-bottom: 20px; color: #fff; display: flex; justify-content: space-between; align-items: flex-start; }
+    .header { border-radius: 14px; padding: 22px 28px; margin-bottom: 16px; color: #fff; display: flex; justify-content: space-between; align-items: flex-start; }
     .header h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
     .header p { font-size: 13px; opacity: .9; }
     .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
     .refresh-btn { padding: 8px 18px; border-radius: 50px; border: none; background: rgba(255,255,255,.25); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
-    .brand-select { padding: 8px 14px; border-radius: 50px; border: none; background: rgba(255,255,255,.9); color: #333; font-weight: 700; font-size: 13px; cursor: pointer; outline: none; }
+    .refresh-btn:hover { background: rgba(255,255,255,.4); }
     .author { font-size: 12px; opacity: .8; }
+    .brand-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .brand-tab { padding: 10px 24px; border-radius: 50px; border: 2px solid transparent; cursor: pointer; font-weight: 700; font-size: 13px; background: #fff; color: #555; box-shadow: 0 1px 4px rgba(0,0,0,.1); transition: all .2s; }
+    .brand-tab:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.15); }
+    .brand-tab.active { color: #fff; border-color: transparent; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
     .card .icon { font-size: 16px; margin-bottom: 4px; }
@@ -38,9 +42,9 @@
     .issue-box { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-left: 4px solid #f59e0b; }
     .issue-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
     .issue-text { font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 6px; }
-    .issue-table { width: 35%; border-collapse: collapse; font-size: 13px; margin: 8px 0 12px 0; }
-    .issue-table th { padding: 8px 20px; text-align: center; font-weight: 600; color: #555; border-bottom: 2px solid #eee; white-space: nowrap; background: #f8f9fa; }
-    .issue-table td { padding: 8px 20px; text-align: center; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    .issue-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .issue-table th { padding: 8px 12px; text-align: center; font-weight: 600; color: #555; border-bottom: 2px solid #eee; white-space: nowrap; background: #f8f9fa; }
+    .issue-table td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
     .kw-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; padding: 14px; background: #f8f9fa; border-radius: 10px; }
     .kw-summary-item { text-align: center; }
     .kw-summary-item .s-label { font-size: 11px; color: #888; margin-bottom: 2px; }
@@ -53,7 +57,10 @@
     .img-label { font-size: 12px; color: #fff; border-radius: 4px; padding: 2px 8px; display: inline-block; margin-bottom: 6px; font-weight: 600; }
     .img-compare-item img { width: 100%; border-radius: 8px; border: 1px solid #eee; display: block; }
     .img-arrow { font-size: 24px; color: #888; padding-top: 30px; }
-    @media (max-width: 768px) { .grid3 { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } .img-compare { flex-direction: column; } .issue-table { width: 100%; } }
+    .issue-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 10px 0 14px 0; }
+    .issue-split-box { background: #f8f9fa; border-radius: 10px; padding: 14px; }
+    .issue-split-box h4 { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 10px; }
+    @media (max-width: 768px) { .grid3 { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } .img-compare { flex-direction: column; } .issue-split { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -65,16 +72,13 @@
       <p>구글 시트 실시간 연동</p>
     </div>
     <div class="header-right">
-      <select class="brand-select" id="brandSelect" onchange="onBrandChange()">
-        <option value="summary">📊 전체 요약</option>
-        <option value="bng">🛒 빌드앤그로우 자사몰</option>
-        <option value="ne">📚 엔이능률</option>
-        <option value="tutor">🎓 엔이튜터</option>
-      </select>
       <button class="refresh-btn" onclick="loadAll()">🔄 새로고침</button>
       <span class="author">디지털마케팅팀_김한솔</span>
     </div>
   </div>
+
+  <!-- 브랜드 탭 버튼 -->
+  <div class="brand-tabs" id="brandTabs"></div>
 
   <div id="errorBox" class="error-box" style="display:none"></div>
   <div id="loading" class="loading">⏳ 데이터를 불러오는 중...</div>
@@ -111,16 +115,41 @@
   <script>
     var SHEET_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbf2l-NnX9MxeenHCOQIJMmSpDwM7aVqIcJyxJFCGXG-PkZDX9LvvD5VodkNNhp0CCBtjPxoQjkryy/pub";
     var BRANDS = {
-      bng:   { name:"네이버 브랜드 검색(키워드) 광고 보고서_자사몰 유입", label:"빌드앤그로우 자사몰", gradient:"linear-gradient(135deg,#a855f7,#ec4899)", shadow:"rgba(168,85,247,.3)", pc:"#a855f7", mo:"#ec4899", daily:"0", kw_pc:"694686318", kw_mo:"1615830362", issues:"513310866", hasConv:true,  hasMo:true,  hasIssueImg:true  },
-      ne:    { name:"네이버 브랜드 검색(키워드) 광고 보고서_엔이능률 공식홈페이지 유입", label:"엔이능률",          gradient:"linear-gradient(135deg,#ef4444,#b91c1c)", shadow:"rgba(239,68,68,.3)",    pc:"#ef4444", mo:"#f97316", daily:"1884349140", kw_pc:"2075995618", kw_mo:"974789792",  issues:null,        hasConv:false, hasMo:true,  hasIssueImg:false },
-      tutor: { name:"네이버 브랜드 검색(키워드) 광고 보고서_엔이튜터 유입",              label:"엔이튜터",           gradient:"linear-gradient(135deg,#1e3a8a,#1d4ed8)", shadow:"rgba(30,58,138,.3)",    pc:"#1d4ed8", mo:"#eab308", daily:"604847504",  kw_pc:"1202029029", kw_mo:null,         issues:"399866077", hasConv:false, hasMo:false, hasIssueImg:false }
+      bng:   { name:"네이버 브랜드 검색(키워드) 광고 보고서_자사몰 유입",              label:"자사몰",   gradient:"linear-gradient(135deg,#a855f7,#ec4899)", shadow:"rgba(168,85,247,.3)", pc:"#a855f7", mo:"#ec4899", daily:"0",          kw_pc:"694686318",  kw_mo:"1615830362", issues:"513310866", hasConv:true,  hasMo:true,  hasIssueImg:true  },
+      ne:    { name:"네이버 브랜드 검색(키워드) 광고 보고서_엔이능률 공식홈페이지 유입", label:"엔이능률", gradient:"linear-gradient(135deg,#ef4444,#b91c1c)", shadow:"rgba(239,68,68,.3)",    pc:"#ef4444", mo:"#f97316", daily:"1884349140", kw_pc:"2075995618", kw_mo:"974789792",  issues:null,        hasConv:false, hasMo:true,  hasIssueImg:false },
+      tutor: { name:"네이버 브랜드 검색(키워드) 광고 보고서_엔이튜터 유입",             label:"엔이튜터", gradient:"linear-gradient(135deg,#1e3a8a,#1d4ed8)", shadow:"rgba(30,58,138,.3)",    pc:"#1d4ed8", mo:"#eab308", daily:"604847504",  kw_pc:"1202029029", kw_mo:null,         issues:"399866077", hasConv:false, hasMo:false, hasIssueImg:false }
     };
-    var SUMMARY = { name:"네이버 브랜드 검색 보고서_빌드앤그로우 자사몰, 엔이능률, 엔이튜터 요약비교", gradient:"linear-gradient(135deg,#334155,#475569)", shadow:"rgba(51,65,85,.3)" };
+    var SUMMARY = { name:"네이버 브랜드 검색 보고서_자사몰, 엔이능률, 엔이튜터 요약비교", gradient:"linear-gradient(135deg,#334155,#475569)", shadow:"rgba(51,65,85,.3)", label:"전체 요약" };
+    var TARGET_KWS = ["능률보카", "서브젝트링크", "그래머존"];
     var charts = {}, allData = {}, kwMode = "pc", kwWeek = "전체", currentBrand = "summary", summaryData = {};
 
     function fmt(n) { return Number(n||0).toLocaleString(); }
     function pct(a,b) { return b>0 ? ((a/b)*100).toFixed(2)+"%" : "0%"; }
     function pn(s) { return parseFloat(String(s||"0").replace(/,/g,""))||0; }
+
+    function renderBrandTabs() {
+      var tabs = [
+        { id:"summary", label:"📊 전체 요약", cfg:SUMMARY },
+        { id:"bng",     label:"🛒 자사몰",    cfg:BRANDS.bng },
+        { id:"ne",      label:"📚 엔이능률",  cfg:BRANDS.ne },
+        { id:"tutor",   label:"🎓 엔이튜터",  cfg:BRANDS.tutor }
+      ];
+      var html = tabs.map(function(t) {
+        var isActive = currentBrand === t.id;
+        var bg = isActive ? t.cfg.gradient : "#fff";
+        var color = isActive ? "#fff" : "#555";
+        var shadow = isActive ? "0 3px 10px " + t.cfg.shadow : "0 1px 4px rgba(0,0,0,.1)";
+        return "<button class='brand-tab"+(isActive?" active":"")+"' onclick=\"switchBrand('"+t.id+"')\" style='background:"+bg+";color:"+color+";box-shadow:"+shadow+"'>"+t.label+"</button>";
+      }).join("");
+      document.getElementById("brandTabs").innerHTML = html;
+    }
+
+    function switchBrand(brand) {
+      currentBrand = brand;
+      kwMode = "pc"; kwWeek = "전체";
+      renderBrandTabs();
+      loadAll();
+    }
 
     function applyTheme(brand) {
       var h = document.getElementById("header");
@@ -149,261 +178,275 @@
 
     function parseDaily(rows) {
       var h = rows[0].map(function(x){return String(x).trim();});
-      var iDate = h.findIndex(function(x){return x.includes("일별");}), iGroup = h.findIndex(function(x){return x.includes("광고그룹");});
-      var iImp = h.findIndex(function(x){return x.includes("노출수");}), iClk = h.findIndex(function(x){return x.includes("클릭수");});
+      var iDate=h.findIndex(function(x){return x.includes("일별");}), iGroup=h.findIndex(function(x){return x.includes("광고그룹");});
+      var iImp=h.findIndex(function(x){return x.includes("노출수");}), iClk=h.findIndex(function(x){return x.includes("클릭수");});
       var records = rows.slice(1).filter(function(r){return r[iDate]&&r[iGroup];}).map(function(r) {
-        var raw = String(r[iDate]).trim(), parts = raw.split(/[.\-]/);
-        var date = parts.length >= 3 ? parts[1]+"/"+parts[2] : raw;
+        var raw=String(r[iDate]).trim(), parts=raw.split(/[.\-]/);
+        var date = parts.length>=3 ? parts[1]+"/"+parts[2] : raw;
         return { date:date, device:String(r[iGroup]).includes("_PC")?"PC":"MO", imp:pn(r[iImp]), clk:pn(r[iClk]) };
       });
       var map = {};
       records.forEach(function(r) {
-        if (!map[r.date]) map[r.date] = { date:r.date, pcImp:0, pcClk:0, moImp:0, moClk:0 };
-        if (r.device==="PC") { map[r.date].pcImp += r.imp; map[r.date].pcClk += r.clk; }
-        else { map[r.date].moImp += r.imp; map[r.date].moClk += r.clk; }
+        if (!map[r.date]) map[r.date]={date:r.date,pcImp:0,pcClk:0,moImp:0,moClk:0};
+        if (r.device==="PC"){map[r.date].pcImp+=r.imp;map[r.date].pcClk+=r.clk;}
+        else{map[r.date].moImp+=r.imp;map[r.date].moClk+=r.clk;}
       });
-      var daily = Object.values(map).sort(function(a,b){return a.date.localeCompare(b.date);});
-      var pc = records.filter(function(r){return r.device==="PC";}), mo = records.filter(function(r){return r.device==="MO";});
-      var s = function(arr,k){return arr.reduce(function(a,r){return a+r[k];},0);};
-      return { daily:daily, pcImp:s(pc,"imp"), pcClk:s(pc,"clk"), moImp:s(mo,"imp"), moClk:s(mo,"clk") };
+      var daily=Object.values(map).sort(function(a,b){return a.date.localeCompare(b.date);});
+      var pc=records.filter(function(r){return r.device==="PC";}), mo=records.filter(function(r){return r.device==="MO";});
+      var s=function(arr,k){return arr.reduce(function(a,r){return a+r[k];},0);};
+      return {daily:daily,pcImp:s(pc,"imp"),pcClk:s(pc,"clk"),moImp:s(mo,"imp"),moClk:s(mo,"clk")};
     }
 
     function parseKw(rows, hasConv) {
-      var h = rows[0].map(function(x){return String(x).trim();});
-      var iWeek = h.findIndex(function(x){return x.includes("주차");}), iKw = h.findIndex(function(x){return x.includes("키워드");});
-      var iImp = h.findIndex(function(x){return x.includes("노출수");}), iClk = h.findIndex(function(x){return x.includes("클릭수");});
-      var iCtr = h.findIndex(function(x){return x.includes("클릭률");}), iConv = hasConv ? h.findIndex(function(x){return x.includes("전환");}) : -1;
-      var data = rows.slice(1).filter(function(r){return r[iKw];}).map(function(r) {
-        return { week:String(r[iWeek]||"").trim(), kw:String(r[iKw]), imp:pn(r[iImp]), clk:pn(r[iClk]), ctr:pn(r[iCtr]), conv:iConv>=0?pn(r[iConv]):0 };
+      var h=rows[0].map(function(x){return String(x).trim();});
+      var iWeek=h.findIndex(function(x){return x.includes("주차");}), iKw=h.findIndex(function(x){return x.includes("키워드");});
+      var iImp=h.findIndex(function(x){return x.includes("노출수");}), iClk=h.findIndex(function(x){return x.includes("클릭수");});
+      var iCtr=h.findIndex(function(x){return x.includes("클릭률");}), iConv=hasConv?h.findIndex(function(x){return x.includes("전환");}): -1;
+      var data=rows.slice(1).filter(function(r){return r[iKw];}).map(function(r){
+        return {week:String(r[iWeek]||"").trim(),kw:String(r[iKw]),imp:pn(r[iImp]),clk:pn(r[iClk]),ctr:pn(r[iCtr]),conv:iConv>=0?pn(r[iConv]):0};
       });
-      var weeks = Array.from(new Set(data.map(function(r){return r.week;}).filter(function(w){return w;})));
-      var byWeek = {};
-      weeks.forEach(function(w){ byWeek[w] = data.filter(function(r){return r.week===w;}); });
-      byWeek["전체"] = data;
-      return { weeks:["전체"].concat(weeks), byWeek:byWeek };
+      var weeks=Array.from(new Set(data.map(function(r){return r.week;}).filter(function(w){return w;})));
+      var byWeek={};
+      weeks.forEach(function(w){byWeek[w]=data.filter(function(r){return r.week===w;});});
+      byWeek["전체"]=data;
+      return {weeks:["전체"].concat(weeks),byWeek:byWeek};
     }
 
     function parseIssues(rows, hasImg) {
-      var issues = [];
-      var tableMode = false, tableHeaders = [], tableRows = [];
-      function flushTable() {
-        if (tableHeaders.length) issues.push({ type:"table", headers:tableHeaders.slice(), rows:tableRows.slice() });
-        tableHeaders = []; tableRows = []; tableMode = false;
+      var issues=[], tableMode=false, tableHeaders=[], tableRows=[];
+      function flushTable(){
+        if(tableHeaders.length) issues.push({type:"table",headers:tableHeaders.slice(),rows:tableRows.slice()});
+        tableHeaders=[];tableRows=[];tableMode=false;
       }
-      rows.slice(1).forEach(function(r) {
-        var a = String(r[0]||"").trim();
-        var b = String(r[1]||"").trim();
-        var c = String(r[2]||"").trim();
-        var d = String(r[3]||"").trim();
-        var e = String(r[4]||"").trim();
-        var f = String(r[5]||"").trim();
-        if (a === "table") {
-          if (tableMode) flushTable();
-          tableMode = true;
-          tableHeaders = [b,c,d,e,f].filter(function(x){return x !== "";});
-        } else if (tableMode) {
-          if (!b && !c && !d && !e && !f) { flushTable(); return; }
-          // 합계 행이면 추가 후 종료
-          if (b === "합계") {
-            tableRows.push([b,c,d,e,f].slice(0, tableHeaders.length));
-            flushTable();
-            return;
-          }
-          // A열에 값 있으면 종료 후 텍스트 처리
-          if (a !== "") {
-            flushTable();
-            if (b) issues.push({ type:"text", text:b, arrow:a==="→", img:hasImg?c:"", img2:hasImg?d:"" });
-            return;
-          }
-          tableRows.push([b,c,d,e,f].slice(0, tableHeaders.length));
+      rows.slice(1).forEach(function(r){
+        var a=String(r[0]||"").trim(), b=String(r[1]||"").trim(), c=String(r[2]||"").trim();
+        var d=String(r[3]||"").trim(), e=String(r[4]||"").trim(), f=String(r[5]||"").trim();
+        if(a==="table"){
+          if(tableMode)flushTable();
+          tableMode=true;
+          tableHeaders=[b,c,d,e,f].filter(function(x){return x!=="";});
+        } else if(tableMode){
+          if(!b&&!c&&!d&&!e&&!f){flushTable();return;}
+          if(b==="합계"){tableRows.push([b,c,d,e,f].slice(0,tableHeaders.length));flushTable();return;}
+          if(a!==""){flushTable();if(b)issues.push({type:"text",text:b,arrow:a==="→",img:hasImg?c:"",img2:hasImg?d:""});return;}
+          tableRows.push([b,c,d,e,f].slice(0,tableHeaders.length));
         } else {
-          if (b) issues.push({ type:"text", text:b, arrow:a==="→", img:hasImg?c:"", img2:hasImg?d:"" });
+          if(b)issues.push({type:"text",text:b,arrow:a==="→",img:hasImg?c:"",img2:hasImg?d:""});
         }
       });
-      if (tableMode) flushTable();
+      if(tableMode)flushTable();
       return issues;
     }
 
+    function getTargetKwStats() {
+      var result = [];
+      TARGET_KWS.forEach(function(target) {
+        var pcData = allData.kw && allData.kw.pc ? allData.kw.pc.byWeek["전체"] || [] : [];
+        var moData = allData.kw && allData.kw.mo ? allData.kw.mo.byWeek["전체"] || [] : [];
+        var pcRow = pcData.find(function(k){return k.kw.includes(target);});
+        var moRow = moData.find(function(k){return k.kw.includes(target);});
+        var imp = (pcRow?pcRow.imp:0) + (moRow?moRow.imp:0);
+        var clk = (pcRow?pcRow.clk:0) + (moRow?moRow.clk:0);
+        result.push({ kw:target, imp:imp, clk:clk, ctr:pct(clk,imp) });
+      });
+      return result;
+    }
+
     function renderIssues(issues, hasImg) {
-      var box = document.getElementById("issueBox");
-      if (!issues || !issues.length) { box.style.display = "none"; return; }
-      box.style.display = "block";
-      var container = document.getElementById("issueList");
-      container.innerHTML = "";
-      var num = 1;
-      issues.forEach(function(iss) {
-        if (iss.type === "table") {
-          var prodIdx = iss.headers.findIndex(function(h){return h.includes("상품");});
-          var prodCount = {};
-          iss.rows.forEach(function(row) {
-            var prod = String(row[prodIdx]||"").trim();
-            if (prod && prod !== "합계") prodCount[prod] = (prodCount[prod]||0) + 1;
+      var box=document.getElementById("issueBox");
+      if(!issues||!issues.length){box.style.display="none";return;}
+      box.style.display="block";
+      var container=document.getElementById("issueList");
+      container.innerHTML="";
+      var num=1;
+      var isBng = currentBrand==="bng";
+
+      issues.forEach(function(iss){
+        if(iss.type==="table"){
+          var prodIdx=iss.headers.findIndex(function(h){return h.includes("상품");});
+          var prodCount={};
+          iss.rows.forEach(function(row){
+            var prod=String(row[prodIdx]||"").trim();
+            if(prod&&prod!=="합계")prodCount[prod]=(prodCount[prod]||0)+1;
           });
-          var maxCount = Math.max.apply(null, [0].concat(Object.values(prodCount)));
-          var bestProds = new Set(Object.keys(prodCount).filter(function(p){return prodCount[p]===maxCount&&maxCount>1;}));
-          var wrap = document.createElement("div");
-          wrap.style.cssText = "margin:8px 0 12px 0";
-          var tbl = document.createElement("table");
-          tbl.className = "issue-table";
-          var html = "<thead><tr>";
-          iss.headers.forEach(function(h){ html += "<th>" + h + "</th>"; });
-          html += "</tr></thead><tbody>";
-          iss.rows.forEach(function(row, i) {
-            var isTotal = String(row[0]).includes("합계");
-            if (isTotal) {
-              var data = row.filter(function(c){return c && c !== "-";});
-              var colspan = iss.headers.length - (data.length - 1);
-              html += "<tr style='background:#f9fffe;font-weight:700'><td colspan='" + colspan + "' style='text-align:center'>합계</td>";
-              data.slice(1).forEach(function(c){ html += "<td>" + c + "</td>"; });
-              html += "</tr>";
+          var maxCount=Math.max.apply(null,[0].concat(Object.values(prodCount)));
+          var bestProds=new Set(Object.keys(prodCount).filter(function(p){return prodCount[p]===maxCount&&maxCount>1;}));
+
+          var tableHtml="<thead><tr>";
+          iss.headers.forEach(function(h){tableHtml+="<th>"+h+"</th>";});
+          tableHtml+="</tr></thead><tbody>";
+          iss.rows.forEach(function(row,i){
+            var isTotal=String(row[0]).includes("합계");
+            if(isTotal){
+              var data=row.filter(function(c){return c&&c!=="-";});
+              var colspan=iss.headers.length-(data.length-1);
+              tableHtml+="<tr style='background:#f9fffe;font-weight:700'><td colspan='"+colspan+"' style='text-align:center'>합계</td>";
+              data.slice(1).forEach(function(c){tableHtml+="<td>"+c+"</td>";});
+              tableHtml+="</tr>";
             } else {
-              html += "<tr style='background:" + (i%2===0?"#fff":"#fafafa") + "'>";
-              row.forEach(function(cell, ci) {
-                var isPC = cell==="PC", isMO = cell==="MO";
-                var color = isPC ? "#1a73e8" : isMO ? "#03C75A" : "inherit";
-                var isBest = ci===prodIdx && bestProds.has(cell);
-                html += "<td style='color:" + color + ";font-weight:" + (isPC||isMO||isBest?700:400) + "'>" + (isBest?"⭐ "+cell:cell) + "</td>";
+              tableHtml+="<tr style='background:"+(i%2===0?"#fff":"#fafafa")+"'>";
+              row.forEach(function(cell,ci){
+                var isPC=cell==="PC",isMO=cell==="MO";
+                var color=isPC?"#1a73e8":isMO?"#03C75A":"inherit";
+                var isBest=ci===prodIdx&&bestProds.has(cell);
+                tableHtml+="<td style='color:"+color+";font-weight:"+(isPC||isMO||isBest?700:400)+"'>"+(isBest?"⭐ "+cell:cell)+"</td>";
               });
-              html += "</tr>";
+              tableHtml+="</tr>";
             }
           });
-          html += "</tbody>";
-          tbl.innerHTML = html;
-          wrap.appendChild(tbl);
-          container.appendChild(wrap);
-        } else {
-          var imgUrl  = iss.img  ? iss.img.trim().replace(/\/view.*$/, "/uc?export=view")  : "";
-          var imgUrl2 = iss.img2 ? iss.img2.trim().replace(/\/view.*$/, "/uc?export=view") : "";
-          var imgHtml = "";
-          if (hasImg && imgUrl && imgUrl2) {
-            imgHtml = "<div class='img-compare'><div class='img-compare-item'><span class='img-label' style='background:#888'>기존 소재</span><img src='" + imgUrl + "'></div><div class='img-arrow'>→</div><div class='img-compare-item'><span class='img-label' style='background:#a855f7'>변경 소재</span><img src='" + imgUrl2 + "'></div></div>";
-          } else if (hasImg && imgUrl) {
-            imgHtml = "<img src='" + imgUrl + "' style='margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;'>";
+          tableHtml+="</tbody>";
+
+          if(isBng){
+            // 좌우 분할: 왼쪽 키워드 통계, 오른쪽 구매 표
+            var kwStats=getTargetKwStats();
+            var kwHtml="<thead><tr><th>키워드</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead><tbody>";
+            kwStats.forEach(function(k,i){
+              kwHtml+="<tr style='background:"+(i%2===0?"#fff":"#fafafa")+"'>";
+              kwHtml+="<td style='font-weight:600'>"+k.kw+"</td><td>"+fmt(k.imp)+"</td><td>"+fmt(k.clk)+"</td><td>"+k.ctr+"</td></tr>";
+            });
+            kwHtml+="</tbody>";
+
+            var splitDiv=document.createElement("div");
+            splitDiv.className="issue-split";
+            splitDiv.innerHTML="<div class='issue-split-box'><h4>📊 연관 키워드 성과 (PC+MO 합산)</h4><table class='issue-table'>"+kwHtml+"</table></div><div class='issue-split-box'><h4>🛒 브랜드 검색 유입 구매 현황</h4><table class='issue-table'>"+tableHtml+"</table></div>";
+            container.appendChild(splitDiv);
+          } else {
+            var wrap=document.createElement("div");
+            wrap.style.cssText="margin:8px 0 12px 0";
+            var tbl=document.createElement("table");
+            tbl.className="issue-table";
+            tbl.style.width="35%";
+            tbl.innerHTML=tableHtml;
+            wrap.appendChild(tbl);
+            container.appendChild(wrap);
           }
-          var el = document.createElement("div");
-          el.className = "issue-text";
-          el.innerHTML = (iss.arrow ? "→ " : (num++) + ". ") + iss.text + imgHtml;
+        } else {
+          var imgUrl=iss.img?iss.img.trim().replace(/\/view.*$/,"/uc?export=view"):"";
+          var imgUrl2=iss.img2?iss.img2.trim().replace(/\/view.*$/,"/uc?export=view"):"";
+          var imgHtml="";
+          if(hasImg&&imgUrl&&imgUrl2){
+            imgHtml="<div class='img-compare'><div class='img-compare-item'><span class='img-label' style='background:#888'>기존 소재</span><img src='"+imgUrl+"'></div><div class='img-arrow'>→</div><div class='img-compare-item'><span class='img-label' style='background:#a855f7'>변경 소재</span><img src='"+imgUrl2+"'></div></div>";
+          } else if(hasImg&&imgUrl){
+            imgHtml="<img src='"+imgUrl+"' style='margin-top:8px;max-width:600px;width:100%;border-radius:8px;border:1px solid #eee;display:block;'>";
+          }
+          var el=document.createElement("div");
+          el.className="issue-text";
+          el.innerHTML=(iss.arrow?"→ ":(num++)+". ")+iss.text+imgHtml;
           container.appendChild(el);
         }
       });
     }
 
-    function renderSummary() {
-      var keys = ["bng","ne","tutor"];
-      document.getElementById("summaryCards").innerHTML = keys.map(function(k) {
-        var b = BRANDS[k], d = summaryData[k];
-        if (!d) return "<div class='summary-brand-card'><span style='font-size:13px;font-weight:700;padding:6px 12px;border-radius:50px;color:#fff;background:"+b.pc+";display:inline-block;margin-bottom:14px'>"+b.label+"</span><p style='color:#aaa;font-size:13px'>데이터 없음</p></div>";
-        var tI = d.pcImp+(b.hasMo?d.moImp:0), tC = d.pcClk+(b.hasMo?d.moClk:0);
-        return "<div class='summary-brand-card'><span style='font-size:13px;font-weight:700;padding:6px 12px;border-radius:50px;color:#fff;background:"+b.gradient+";display:inline-block;margin-bottom:14px'>"+b.label+"</span><div class='summary-metric'><span style='color:#888'>총 노출수</span><span style='font-weight:700;color:"+b.pc+"'>"+fmt(tI)+"</span></div><div class='summary-metric'><span style='color:#888'>총 클릭수</span><span style='font-weight:700;color:"+b.pc+"'>"+fmt(tC)+"</span></div><div class='summary-metric'><span style='color:#888'>평균 CTR</span><span style='font-weight:700;color:#f59e0b'>"+pct(tC,tI)+"</span></div></div>";
+    function renderSummary(){
+      var keys=["bng","ne","tutor"];
+      document.getElementById("summaryCards").innerHTML=keys.map(function(k){
+        var b=BRANDS[k],d=summaryData[k];
+        if(!d)return"<div class='summary-brand-card'><span style='font-size:13px;font-weight:700;padding:6px 12px;border-radius:50px;color:#fff;background:"+b.pc+";display:inline-block;margin-bottom:14px'>"+b.label+"</span><p style='color:#aaa;font-size:13px'>데이터 없음</p></div>";
+        var tI=d.pcImp+(b.hasMo?d.moImp:0),tC=d.pcClk+(b.hasMo?d.moClk:0);
+        return"<div class='summary-brand-card'><span style='font-size:13px;font-weight:700;padding:6px 12px;border-radius:50px;color:#fff;background:"+b.gradient+";display:inline-block;margin-bottom:14px'>"+b.label+"</span><div class='summary-metric'><span style='color:#888'>총 노출수</span><span style='font-weight:700;color:"+b.pc+"'>"+fmt(tI)+"</span></div><div class='summary-metric'><span style='color:#888'>총 클릭수</span><span style='font-weight:700;color:"+b.pc+"'>"+fmt(tC)+"</span></div><div class='summary-metric'><span style='color:#888'>평균 CTR</span><span style='font-weight:700;color:#f59e0b'>"+pct(tC,tI)+"</span></div></div>";
       }).join("");
-      var allDates = Array.from(new Set(keys.reduce(function(acc,k){return acc.concat((summaryData[k]&&summaryData[k].daily||[]).map(function(d){return d.date;}));},[]))).sort();
+      var allDates=Array.from(new Set(keys.reduce(function(acc,k){return acc.concat((summaryData[k]&&summaryData[k].daily||[]).map(function(d){return d.date;}));},[])));
+      allDates.sort();
       function gv(k,date,f){var d=(summaryData[k]&&summaryData[k].daily||[]).find(function(x){return x.date===date;});return d?(d[f]||0):0;}
-      if (charts.sLine) charts.sLine.destroy();
-      charts.sLine = new Chart(document.getElementById("summaryLineChart"), { type:"line", data:{ labels:allDates, datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcImp")+(BRANDS[k].hasMo?gv(k,date,"moImp"):0);}),borderColor:BRANDS[k].pc,backgroundColor:BRANDS[k].pc+"22",tension:.3,fill:false,pointRadius:3};})}, options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
-      if (charts.sBar) charts.sBar.destroy();
-      charts.sBar = new Chart(document.getElementById("summaryBarChart"), { type:"bar", data:{ labels:allDates, datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcClk")+(BRANDS[k].hasMo?gv(k,date,"moClk"):0);}),backgroundColor:BRANDS[k].pc};})}, options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
-      var tHtml = "<thead><tr><th style='text-align:left'>브랜드</th><th>총 노출수</th><th>총 클릭수</th><th>평균 CTR</th></tr></thead><tbody>";
+      if(charts.sLine)charts.sLine.destroy();
+      charts.sLine=new Chart(document.getElementById("summaryLineChart"),{type:"line",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcImp")+(BRANDS[k].hasMo?gv(k,date,"moImp"):0);}),borderColor:BRANDS[k].pc,backgroundColor:BRANDS[k].pc+"22",tension:.3,fill:false,pointRadius:3};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+      if(charts.sBar)charts.sBar.destroy();
+      charts.sBar=new Chart(document.getElementById("summaryBarChart"),{type:"bar",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcClk")+(BRANDS[k].hasMo?gv(k,date,"moClk"):0);}),backgroundColor:BRANDS[k].pc};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+      var tHtml="<thead><tr><th style='text-align:left'>브랜드</th><th>총 노출수</th><th>총 클릭수</th><th>평균 CTR</th></tr></thead><tbody>";
       keys.forEach(function(k){var b=BRANDS[k],d=summaryData[k],tI=d?(d.pcImp+(b.hasMo?d.moImp:0)):0,tC=d?(d.pcClk+(b.hasMo?d.moClk:0)):0;tHtml+="<tr><td><span style='display:inline-block;width:10px;height:10px;border-radius:50%;background:"+b.pc+";margin-right:6px'></span><strong>"+b.label+"</strong></td><td>"+fmt(tI)+"</td><td>"+fmt(tC)+"</td><td style='color:#f59e0b;font-weight:700'>"+pct(tC,tI)+"</td></tr>";});
-      document.getElementById("summaryTable").innerHTML = tHtml + "</tbody>";
+      document.getElementById("summaryTable").innerHTML=tHtml+"</tbody>";
     }
 
-    function renderCards(d, b) {
-      var total = d.pcImp+(b.hasMo?d.moImp:0), totalClk = d.pcClk+(b.hasMo?d.moClk:0);
-      var items = [{label:"총 노출수",val:fmt(total),color:b.pc,icon:"👁"},{label:"총 클릭수",val:fmt(totalClk),color:b.pc,icon:"👆"},{label:"평균 CTR",val:pct(totalClk,total),color:"#f59e0b",icon:"📊"}];
-      if (b.hasMo) { items.push({label:"PC 클릭수",val:fmt(d.pcClk),color:b.pc,icon:"💻"}); items.push({label:"MO 클릭수",val:fmt(d.moClk),color:b.mo,icon:"📱"}); }
-      document.getElementById("cards").innerHTML = items.map(function(c){return "<div class='card' style='border-left:4px solid "+c.color+"'><div class='icon'>"+c.icon+"</div><div class='label'>"+c.label+"</div><div class='value'>"+c.val+"</div></div>";}).join("");
+    function renderCards(d,b){
+      var total=d.pcImp+(b.hasMo?d.moImp:0),totalClk=d.pcClk+(b.hasMo?d.moClk:0);
+      var items=[{label:"총 노출수",val:fmt(total),color:b.pc,icon:"👁"},{label:"총 클릭수",val:fmt(totalClk),color:b.pc,icon:"👆"},{label:"평균 CTR",val:pct(totalClk,total),color:"#f59e0b",icon:"📊"}];
+      if(b.hasMo){items.push({label:"PC 클릭수",val:fmt(d.pcClk),color:b.pc,icon:"💻"});items.push({label:"MO 클릭수",val:fmt(d.moClk),color:b.mo,icon:"📱"});}
+      document.getElementById("cards").innerHTML=items.map(function(c){return"<div class='card' style='border-left:4px solid "+c.color+"'><div class='icon'>"+c.icon+"</div><div class='label'>"+c.label+"</div><div class='value'>"+c.val+"</div></div>";}).join("");
     }
 
-    function renderDeviceTable(d, b) {
-      var total = d.pcImp+(b.hasMo?d.moImp:0), totalClk = d.pcClk+(b.hasMo?d.moClk:0);
-      var moRow = b.hasMo ? "<tr><td style='color:"+b.mo+"'>📱 MO</td><td>"+fmt(d.moImp)+"</td><td>"+fmt(d.moClk)+"</td><td>"+pct(d.moClk,d.moImp)+"</td></tr>" : "";
-      document.getElementById("deviceTable").innerHTML = "<thead><tr><th>구분</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead><tbody><tr><td style='color:"+b.pc+"'>💻 PC</td><td>"+fmt(d.pcImp)+"</td><td>"+fmt(d.pcClk)+"</td><td>"+pct(d.pcClk,d.pcImp)+"</td></tr>"+moRow+"<tr style='font-weight:700'><td>합계</td><td>"+fmt(total)+"</td><td>"+fmt(totalClk)+"</td><td>"+pct(totalClk,total)+"</td></tr></tbody>";
+    function renderDeviceTable(d,b){
+      var total=d.pcImp+(b.hasMo?d.moImp:0),totalClk=d.pcClk+(b.hasMo?d.moClk:0);
+      var moRow=b.hasMo?"<tr><td style='color:"+b.mo+"'>📱 MO</td><td>"+fmt(d.moImp)+"</td><td>"+fmt(d.moClk)+"</td><td>"+pct(d.moClk,d.moImp)+"</td></tr>":"";
+      document.getElementById("deviceTable").innerHTML="<thead><tr><th>구분</th><th>노출수</th><th>클릭수</th><th>CTR</th></tr></thead><tbody><tr><td style='color:"+b.pc+"'>💻 PC</td><td>"+fmt(d.pcImp)+"</td><td>"+fmt(d.pcClk)+"</td><td>"+pct(d.pcClk,d.pcImp)+"</td></tr>"+moRow+"<tr style='font-weight:700'><td>합계</td><td>"+fmt(total)+"</td><td>"+fmt(totalClk)+"</td><td>"+pct(totalClk,total)+"</td></tr></tbody>";
     }
 
-    function renderCharts(d, b) {
-      if (charts.pie) charts.pie.destroy();
-      if (charts.line) charts.line.destroy();
-      if (charts.bar) charts.bar.destroy();
-      charts.pie = new Chart(document.getElementById("pieChart"), { type:"doughnut", data:b.hasMo?{labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[b.pc,b.mo]}]}:{labels:["PC"],datasets:[{data:[d.pcImp],backgroundColor:[b.pc]}]}, options:{plugins:{legend:{position:"bottom"}},maintainAspectRatio:false}});
-      var labels = d.daily.map(function(x){return x.date;});
-      var lineDS = [{label:"PC 노출",data:d.daily.map(function(x){return x.pcImp;}),borderColor:b.pc,backgroundColor:b.pc+"22",tension:.3,fill:true}];
-      if (b.hasMo) lineDS.push({label:"MO 노출",data:d.daily.map(function(x){return x.moImp;}),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
-      charts.line = new Chart(document.getElementById("lineChart"), { type:"line", data:{labels:labels,datasets:lineDS}, options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
-      var barDS = [{label:"PC 클릭",data:d.daily.map(function(x){return x.pcClk;}),backgroundColor:b.pc}];
-      if (b.hasMo) barDS.push({label:"MO 클릭",data:d.daily.map(function(x){return x.moClk;}),backgroundColor:b.mo});
-      charts.bar = new Chart(document.getElementById("barChart"), { type:"bar", data:{labels:labels,datasets:barDS}, options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
+    function renderCharts(d,b){
+      if(charts.pie)charts.pie.destroy();if(charts.line)charts.line.destroy();if(charts.bar)charts.bar.destroy();
+      charts.pie=new Chart(document.getElementById("pieChart"),{type:"doughnut",data:b.hasMo?{labels:["PC","MO"],datasets:[{data:[d.pcImp,d.moImp],backgroundColor:[b.pc,b.mo]}]}:{labels:["PC"],datasets:[{data:[d.pcImp],backgroundColor:[b.pc]}]},options:{plugins:{legend:{position:"bottom"}},maintainAspectRatio:false}});
+      var labels=d.daily.map(function(x){return x.date;});
+      var lineDS=[{label:"PC 노출",data:d.daily.map(function(x){return x.pcImp;}),borderColor:b.pc,backgroundColor:b.pc+"22",tension:.3,fill:true}];
+      if(b.hasMo)lineDS.push({label:"MO 노출",data:d.daily.map(function(x){return x.moImp;}),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
+      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
+      var barDS=[{label:"PC 클릭",data:d.daily.map(function(x){return x.pcClk;}),backgroundColor:b.pc}];
+      if(b.hasMo)barDS.push({label:"MO 클릭",data:d.daily.map(function(x){return x.moClk;}),backgroundColor:b.mo});
+      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels:labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo}}}});
     }
 
-    function renderKwTabs(b) {
-      var html = "<button class='kw-tab' id='pcTab' onclick=\"switchKw('pc')\" style='background:"+(kwMode==='pc'?b.pc:'#f0f0f0')+";color:"+(kwMode==='pc'?'#fff':'#555')+"'>💻 PC</button>";
-      if (b.hasMo) html += "<button class='kw-tab' id='moTab' onclick=\"switchKw('mo')\" style='background:"+(kwMode==='mo'?b.mo:'#f0f0f0')+";color:"+(kwMode==='mo'?'#fff':'#555')+"'>📱 MO</button>";
-      document.getElementById("kwTabs").innerHTML = html;
+    function renderKwTabs(b){
+      var html="<button class='kw-tab' onclick=\"switchKw('pc')\" style='background:"+(kwMode==='pc'?b.pc:'#f0f0f0')+";color:"+(kwMode==='pc'?'#fff':'#555')+"'>💻 PC</button>";
+      if(b.hasMo)html+="<button class='kw-tab' onclick=\"switchKw('mo')\" style='background:"+(kwMode==='mo'?b.mo:'#f0f0f0')+";color:"+(kwMode==='mo'?'#fff':'#555')+"'>📱 MO</button>";
+      document.getElementById("kwTabs").innerHTML=html;
     }
 
-    function renderKw(mode, week) {
-      var b = BRANDS[currentBrand], kwData = allData.kw[mode];
-      if (!kwData) return;
-      var kws = kwData.byWeek[week] ? kwData.byWeek[week].slice().sort(function(a,b){return b.clk-a.clk;}) : [];
-      var top8 = kws.slice(0,8), color = mode==="pc" ? b.pc : b.mo;
-      document.getElementById("weekTabs").innerHTML = kwData.weeks.map(function(w){return "<button onclick=\"switchWeek('"+w+"')\" style='padding:5px 14px;border-radius:50px;border:none;cursor:pointer;font-weight:600;font-size:11px;background:"+(kwWeek===w?"#f59e0b":"#f0f0f0")+";color:"+(kwWeek===w?"#fff":"#555")+"'>"+w+"</button>";}).join("");
-      var se = document.getElementById("kwSummary");
-      if (b.hasConv) {
-        var tI=kws.reduce(function(s,k){return s+k.imp;},0), tC=kws.reduce(function(s,k){return s+k.clk;},0), tV=kws.reduce(function(s,k){return s+k.conv;},0);
-        se.style.display="grid";
-        se.innerHTML=[{label:"총 노출수",val:fmt(tI),color:b.pc},{label:"총 클릭수",val:fmt(tC),color:b.pc},{label:"평균 CTR",val:pct(tC,tI),color:"#f59e0b"},{label:"총 전환(가입수)",val:fmt(tV),color:"#f59e0b"}].map(function(c){return "<div class='kw-summary-item'><div class='s-label'>"+c.label+"</div><div class='s-value' style='color:"+c.color+"'>"+c.val+"</div></div>";}).join("");
-      } else se.style.display="none";
-      if (charts.kw) charts.kw.destroy();
-      charts.kw = new Chart(document.getElementById("kwChart"), { type:"bar", data:{labels:top8.map(function(k){return k.kw;}),datasets:[{label:"클릭수",data:top8.map(function(k){return k.clk;}),backgroundColor:color}]}, options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-      var ch = b.hasConv ? "<th style='min-width:90px'>전환(가입수)</th>" : "";
-      var tHtml = "<thead><tr><th style='text-align:left;padding:7px 8px;min-width:120px'>키워드</th><th style='min-width:70px'>노출수</th><th style='min-width:70px'>클릭수</th><th style='min-width:70px'>CTR</th>"+ch+"</tr></thead><tbody>";
+    function renderKw(mode,week){
+      var b=BRANDS[currentBrand],kwData=allData.kw[mode];
+      if(!kwData)return;
+      var kws=kwData.byWeek[week]?kwData.byWeek[week].slice().sort(function(a,b){return b.clk-a.clk;}):[];
+      var top8=kws.slice(0,8),color=mode==="pc"?b.pc:b.mo;
+      document.getElementById("weekTabs").innerHTML=kwData.weeks.map(function(w){return"<button onclick=\"switchWeek('"+w+"')\" style='padding:5px 14px;border-radius:50px;border:none;cursor:pointer;font-weight:600;font-size:11px;background:"+(kwWeek===w?"#f59e0b":"#f0f0f0")+";color:"+(kwWeek===w?"#fff":"#555")+"'>"+w+"</button>";}).join("");
+      var se=document.getElementById("kwSummary");
+      if(b.hasConv){var tI=kws.reduce(function(s,k){return s+k.imp;},0),tC=kws.reduce(function(s,k){return s+k.clk;},0),tV=kws.reduce(function(s,k){return s+k.conv;},0);se.style.display="grid";se.innerHTML=[{label:"총 노출수",val:fmt(tI),color:b.pc},{label:"총 클릭수",val:fmt(tC),color:b.pc},{label:"평균 CTR",val:pct(tC,tI),color:"#f59e0b"},{label:"총 전환(가입수)",val:fmt(tV),color:"#f59e0b"}].map(function(c){return"<div class='kw-summary-item'><div class='s-label'>"+c.label+"</div><div class='s-value' style='color:"+c.color+"'>"+c.val+"</div></div>";}).join("");}else se.style.display="none";
+      if(charts.kw)charts.kw.destroy();
+      charts.kw=new Chart(document.getElementById("kwChart"),{type:"bar",data:{labels:top8.map(function(k){return k.kw;}),datasets:[{label:"클릭수",data:top8.map(function(k){return k.clk;}),backgroundColor:color}]},options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+      var ch=b.hasConv?"<th style='min-width:90px'>전환(가입수)</th>":"";
+      var tHtml="<thead><tr><th style='text-align:left;padding:7px 8px;min-width:120px'>키워드</th><th style='min-width:70px'>노출수</th><th style='min-width:70px'>클릭수</th><th style='min-width:70px'>CTR</th>"+ch+"</tr></thead><tbody>";
       kws.forEach(function(k,i){
-        var cc = b.hasConv ? "<td style='color:"+(k.conv>0?"#f59e0b":"#ccc")+";font-weight:"+(k.conv>0?700:400)+"'>"+(k.conv>0?k.conv:"-")+"</td>" : "";
-        tHtml += "<tr style='background:"+(i===0?"#f5f0ff":"#fff")+"'><td style='text-align:left;padding:7px 8px;font-weight:"+(i===0?700:400)+"'>"+k.kw+(i===0?"<span class='badge' style='background:"+color+"'>TOP</span>":"")+(k.conv>0?"<span class='badge' style='background:#f59e0b'>전환</span>":"")+"</td><td>"+fmt(k.imp)+"</td><td><strong>"+fmt(k.clk)+"</strong></td><td>"+k.ctr.toFixed(2)+"%</td>"+cc+"</tr>";
+        var cc=b.hasConv?"<td style='color:"+(k.conv>0?"#f59e0b":"#ccc")+";font-weight:"+(k.conv>0?700:400)+"'>"+(k.conv>0?k.conv:"-")+"</td>":"";
+        tHtml+="<tr style='background:"+(i===0?"#f5f0ff":"#fff")+"'><td style='text-align:left;padding:7px 8px;font-weight:"+(i===0?700:400)+"'>"+k.kw+(i===0?"<span class='badge' style='background:"+color+"'>TOP</span>":"")+(k.conv>0?"<span class='badge' style='background:#f59e0b'>전환</span>":"")+"</td><td>"+fmt(k.imp)+"</td><td><strong>"+fmt(k.clk)+"</strong></td><td>"+k.ctr.toFixed(2)+"%</td>"+cc+"</tr>";
       });
-      document.getElementById("kwTable").innerHTML = tHtml + "</tbody>";
+      document.getElementById("kwTable").innerHTML=tHtml+"</tbody>";
     }
 
-    function switchKw(mode) { kwMode=mode; renderKwTabs(BRANDS[currentBrand]); renderKw(kwMode,kwWeek); }
-    function switchWeek(week) { kwWeek=week; renderKw(kwMode,kwWeek); }
-    function onBrandChange() { currentBrand=document.getElementById("brandSelect").value; kwMode="pc"; kwWeek="전체"; loadAll(); }
+    function switchKw(mode){kwMode=mode;renderKwTabs(BRANDS[currentBrand]);renderKw(kwMode,kwWeek);}
+    function switchWeek(week){kwWeek=week;renderKw(kwMode,kwWeek);}
 
-    async function loadAll() {
+    async function loadAll(){
       document.getElementById("loading").style.display="block";
       document.getElementById("content").style.display="none";
       document.getElementById("summaryContent").style.display="none";
       document.getElementById("errorBox").style.display="none";
       document.getElementById("issueBox").style.display="none";
       applyTheme(currentBrand);
-      try {
-        if (currentBrand === "summary") {
-          var rows = await Promise.all([fetchCSV(BRANDS.bng.daily), fetchCSV(BRANDS.ne.daily), fetchCSV(BRANDS.tutor.daily)]);
-          summaryData = { bng:parseDaily(rows[0]), ne:parseDaily(rows[1]), tutor:parseDaily(rows[2]) };
-          document.getElementById("datePeriod").textContent = "";
+      try{
+        if(currentBrand==="summary"){
+          var rows=await Promise.all([fetchCSV(BRANDS.bng.daily),fetchCSV(BRANDS.ne.daily),fetchCSV(BRANDS.tutor.daily)]);
+          summaryData={bng:parseDaily(rows[0]),ne:parseDaily(rows[1]),tutor:parseDaily(rows[2])};
+          document.getElementById("datePeriod").textContent="";
           document.getElementById("loading").style.display="none";
           document.getElementById("summaryContent").style.display="block";
           renderSummary();
         } else {
-          var b = BRANDS[currentBrand];
-          var fetches = [fetchCSV(b.daily), fetchCSV(b.kw_pc), b.hasMo?fetchCSV(b.kw_mo):Promise.resolve(null), b.issues?fetchCSV(b.issues):Promise.resolve(null)];
-          var results = await Promise.all(fetches);
-          var daily = parseDaily(results[0]);
-          allData = { daily:daily, kw:{ pc:parseKw(results[1],b.hasConv), mo:results[2]?parseKw(results[2],b.hasConv):null }};
-          var dates = daily.daily.map(function(x){return x.date;}).sort();
-          document.getElementById("datePeriod").textContent = dates.length>0 ? "📅 "+dates[0]+" ~ "+dates[dates.length-1] : "";
-          if (results[3]) renderIssues(parseIssues(results[3],b.hasIssueImg), b.hasIssueImg);
-          renderCards(daily,b); renderDeviceTable(daily,b); renderCharts(daily,b);
-          document.getElementById("deviceGrid").style.display = b.hasMo?"grid":"none";
-          renderKwTabs(b); renderKw(kwMode,kwWeek);
+          var b=BRANDS[currentBrand];
+          var results=await Promise.all([fetchCSV(b.daily),fetchCSV(b.kw_pc),b.hasMo?fetchCSV(b.kw_mo):Promise.resolve(null),b.issues?fetchCSV(b.issues):Promise.resolve(null)]);
+          var daily=parseDaily(results[0]);
+          allData={daily:daily,kw:{pc:parseKw(results[1],b.hasConv),mo:results[2]?parseKw(results[2],b.hasConv):null}};
+          var dates=daily.daily.map(function(x){return x.date;}).sort();
+          document.getElementById("datePeriod").textContent=dates.length>0?"📅 "+dates[0]+" ~ "+dates[dates.length-1]:"";
+          if(results[3])renderIssues(parseIssues(results[3],b.hasIssueImg),b.hasIssueImg);
+          renderCards(daily,b);renderDeviceTable(daily,b);renderCharts(daily,b);
+          document.getElementById("deviceGrid").style.display=b.hasMo?"grid":"none";
+          renderKwTabs(b);renderKw(kwMode,kwWeek);
           document.getElementById("loading").style.display="none";
           document.getElementById("content").style.display="block";
         }
-      } catch(e) {
+      }catch(e){
         document.getElementById("loading").style.display="none";
         document.getElementById("errorBox").style.display="block";
         document.getElementById("errorBox").textContent="⚠️ "+e.message;
       }
     }
 
+    renderBrandTabs();
     loadAll();
   </script>
 </body>

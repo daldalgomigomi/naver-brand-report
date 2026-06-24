@@ -373,27 +373,41 @@
           return `<li style="list-style:none;margin-top:12px;margin-bottom:16px">
             <table style="width:35%;border-collapse:collapse;font-size:13px">
               <thead><tr style="background:#f8f9fa">${iss.headers.map(h=>`<th style="padding:8px 20px;text-align:center;font-weight:600;color:#555;border-bottom:2px solid #eee;white-space:nowrap">${h}</th>`).join("")}</tr></thead>
-              <tbody>${iss.rows.map((row,i)=>{
-                const isTotal = String(row[0]).includes("합계");
-                if (isTotal) {
-                  const nonEmptyCells = row.filter(c=>c&&c!=="-");
-                  const dataCells = nonEmptyCells.slice(1).map(cell=>
-                    `<td style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700;white-space:nowrap">${cell}</td>`
-                  ).join("");
-                  const colspan = iss.headers.length - (nonEmptyCells.length - 1);
-                  return `<tr style="background:#f9fffe">
-                    <td colspan="${colspan}" style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700">합계</td>
-                    ${dataCells}
+              <tbody>${(()=>{
+                // 구매상품 컬럼 인덱스 찾기 (헤더에서 '상품' 포함)
+                const prodIdx = iss.headers.findIndex(h=>h.includes("상품"));
+                // 가장 많이 등장한 상품 찾기
+                const prodCount = {};
+                iss.rows.forEach(row => {
+                  const prod = row[prodIdx];
+                  if (prod && !row[0].includes("합계")) prodCount[prod] = (prodCount[prod]||0)+1;
+                });
+                const maxCount = Math.max(...Object.values(prodCount));
+                const bestProds = new Set(Object.keys(prodCount).filter(p=>prodCount[p]===maxCount));
+
+                return iss.rows.map((row,i)=>{
+                  const isTotal = String(row[0]).includes("합계");
+                  if (isTotal) {
+                    const nonEmptyCells = row.filter(c=>c&&c!=="-");
+                    const dataCells = nonEmptyCells.slice(1).map(cell=>
+                      `<td style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700;white-space:nowrap">${cell}</td>`
+                    ).join("");
+                    const colspan = iss.headers.length - (nonEmptyCells.length - 1);
+                    return `<tr style="background:#f9fffe">
+                      <td colspan="${colspan}" style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;font-weight:700">합계</td>
+                      ${dataCells}
+                    </tr>`;
+                  }
+                  return `<tr style="background:${i%2===0?"#fff":"#fafafa"}">
+                    ${row.map((cell, ci)=>{
+                      const isPC=cell==="PC", isMO=cell==="MO";
+                      const color=isPC?"#1a73e8":isMO?"#03C75A":"inherit";
+                      const isBest = ci===prodIdx && bestProds.has(cell) && maxCount>1;
+                      return `<td style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;color:${color};font-weight:${isPC||isMO||isBest?700:400};white-space:nowrap">${isBest?`⭐ ${cell}`:cell}</td>`;
+                    }).join("")}
                   </tr>`;
-                }
-                return `<tr style="background:${i%2===0?"#fff":"#fafafa"}">
-                  ${row.map((cell)=>{
-                    const isPC=cell==="PC", isMO=cell==="MO";
-                    const color=isPC?"#1a73e8":isMO?"#03C75A":"inherit";
-                    return `<td style="padding:8px 20px;text-align:center;border-bottom:1px solid #f0f0f0;color:${color};font-weight:${isPC||isMO?700:400};white-space:nowrap">${cell}</td>`;
-                  }).join("")}
-                </tr>`;
-              }).join("")}</tbody>
+                }).join("");
+              })()}</tbody>
             </table>
           </li>`;
         } else {

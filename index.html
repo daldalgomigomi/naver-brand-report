@@ -200,10 +200,17 @@
       const text = await res.text();
       return text.trim().split("\n").map(r => {
         const result = []; let cur = "", inQ = false;
-        for (let ch of r) {
-          if (ch==='"') inQ=!inQ;
-          else if (ch===',' && !inQ) { result.push(cur.trim()); cur=""; }
-          else cur+=ch;
+        for (let i = 0; i < r.length; i++) {
+          const ch = r[i];
+          if (ch === '"') {
+            if (inQ && r[i+1] === '"') { cur += '"'; i++; }
+            else inQ = !inQ;
+          } else if (ch === ',' && !inQ) {
+            result.push(cur.trim());
+            cur = "";
+          } else {
+            cur += ch;
+          }
         }
         result.push(cur.trim());
         return result;

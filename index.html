@@ -351,9 +351,9 @@
       allDates.sort();
       function gv(k,date,f){var d=(summaryData[k]&&summaryData[k].daily||[]).find(function(x){return x.date===date;});return d?(d[f]||0):0;}
       if(charts.sLine)charts.sLine.destroy();
-      charts.sLine=new Chart(document.getElementById("summaryLineChart"),{type:"line",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcImp")+(BRANDS[k].hasMo?gv(k,date,"moImp"):0);}),borderColor:BRANDS[k].pc,backgroundColor:BRANDS[k].pc+"22",tension:.3,fill:false,pointRadius:3};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},annotation:getAnnotation(allDates,"자사몰 광고 재계약으로 1일 OFF")}}});
+      charts.sLine=new Chart(document.getElementById("summaryLineChart"),{type:"line",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcImp")+(BRANDS[k].hasMo?gv(k,date,"moImp"):0);}),borderColor:BRANDS[k].pc,backgroundColor:BRANDS[k].pc+"22",tension:.3,fill:false,pointRadius:3};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},annotation:getAnnotation(allDates,"자사몰 광고 재계약으로 1일 OFF","#7c3aed",85,60)}}});
       if(charts.sBar)charts.sBar.destroy();
-      charts.sBar=new Chart(document.getElementById("summaryBarChart"),{type:"bar",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcClk")+(BRANDS[k].hasMo?gv(k,date,"moClk"):0);}),backgroundColor:BRANDS[k].pc};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},annotation:getAnnotation(allDates,"자사몰 광고 재계약으로 1일 OFF")}}});
+      charts.sBar=new Chart(document.getElementById("summaryBarChart"),{type:"bar",data:{labels:allDates,datasets:keys.map(function(k){return{label:BRANDS[k].label,data:allDates.map(function(date){return gv(k,date,"pcClk")+(BRANDS[k].hasMo?gv(k,date,"moClk"):0);}),backgroundColor:BRANDS[k].pc};})},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},annotation:getAnnotation(allDates,"자사몰 광고 재계약으로 1일 OFF","#7c3aed",85,60)}}});
       var tHtml="<thead><tr><th style='text-align:left'>브랜드</th><th>총 노출수</th><th>총 클릭수</th><th>평균 CTR</th></tr></thead><tbody>";
       keys.forEach(function(k){var b=BRANDS[k],d=summaryData[k],tI=d?(d.pcImp+(b.hasMo?d.moImp:0)):0,tC=d?(d.pcClk+(b.hasMo?d.moClk:0)):0;tHtml+="<tr><td><span style='display:inline-block;width:10px;height:10px;border-radius:50%;background:"+b.pc+";margin-right:6px'></span><strong>"+b.label+"</strong></td><td>"+fmt(tI)+"</td><td>"+fmt(tC)+"</td><td style='color:#f59e0b;font-weight:700'>"+pct(tC,tI)+"</td></tr>";});
       document.getElementById("summaryTable").innerHTML=tHtml+"</tbody>";
@@ -412,10 +412,10 @@
       var labels=d.daily.map(function(x){return x.date;});
       var lineDS=[{label:"PC 노출",data:d.daily.map(function(x){return x.pcImp;}),borderColor:b.pc,backgroundColor:b.pc+"22",tension:.3,fill:true}];
       if(b.hasMo)lineDS.push({label:"MO 노출",data:d.daily.map(function(x){return x.moImp;}),borderColor:b.mo,backgroundColor:b.mo+"22",tension:.3,fill:true});
-      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo},annotation:getAnnotation(labels)}}});
+      charts.line=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:labels,datasets:lineDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo},annotation:getAnnotation(labels,null,"#dc2626",40,10)}}});
       var barDS=[{label:"PC 클릭",data:d.daily.map(function(x){return x.pcClk;}),backgroundColor:b.pc}];
       if(b.hasMo)barDS.push({label:"MO 클릭",data:d.daily.map(function(x){return x.moClk;}),backgroundColor:b.mo});
-      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels:labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo},annotation:getAnnotation(labels)}}});
+      charts.bar=new Chart(document.getElementById("barChart"),{type:"bar",data:{labels:labels,datasets:barDS},options:{maintainAspectRatio:false,plugins:{legend:{display:b.hasMo},annotation:getAnnotation(labels,null,"#dc2626",40,10)}}});
     }
 
     function renderKwTabs(b){

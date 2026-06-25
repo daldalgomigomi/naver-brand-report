@@ -376,22 +376,31 @@
       var idx = labels.indexOf("06/12");
       if (idx < 0) return {};
       var label = text || "재계약으로 1일 OFF";
+      var label1 = text ? text.split(" ").slice(0,2).join(" ") : "재계약으로";
+      var label2 = text ? text.split(" ").slice(2).join(" ") : "1일 OFF";
       return {
         annotations: {
-          offLabel: {
+          offLine: {
             type: "line",
             xMin: idx, xMax: idx,
-            borderColor: "rgba(220,38,38,0.4)",
+            borderColor: "rgba(220,38,38,0.5)",
+            borderWidth: 1.5,
+            borderDash: [5,5],
+          },
+          offLabel: {
+            type: "label",
+            xValue: idx,
+            yValue: "max",
+            xAdjust: 80,
+            yAdjust: 10,
+            backgroundColor: "rgba(255,255,255,0.92)",
+            borderColor: "#dc2626",
             borderWidth: 1,
-            borderDash: [4,4],
-            label: {
-              display: true,
-              content: label,
-              color: "#dc2626",
-              backgroundColor: "rgba(255,255,255,0.85)",
-              font: { size: 11, weight: "bold" },
-              position: "start"
-            }
+            borderRadius: 4,
+            color: "#dc2626",
+            content: ["↙ " + label1, label2],
+            font: { size: 10, weight: "bold" },
+            padding: { top:3, bottom:3, left:6, right:6 },
           }
         }
       };

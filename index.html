@@ -362,7 +362,7 @@
             kwStats.forEach(function(k,i){kwHtml+="<tr style='background:"+(i%2===0?"#fff":"#fafafa")+"'><td style='font-weight:600'>"+k.kw+"</td><td>"+fmt(k.imp)+"</td><td>"+fmt(k.clk)+"</td><td>"+k.ctr+"</td></tr>";});
             kwHtml+="<tr style='background:#f9fffe;font-weight:700'><td>합계/평균</td><td>"+fmt(tImp)+"</td><td>"+fmt(tClk)+"</td><td>"+pct(tClk,tImp)+"</td></tr></tbody>";
             var splitDiv=document.createElement("div");splitDiv.className="issue-split";
-            splitDiv.innerHTML="<div class='issue-split-box'><h4>📊 구매상품명 연관 키워드 데이터</h4><table class='issue-table'>"+kwHtml+"</table></div><div class='issue-split-box'><h4>🛒 브랜드 검색 유입 구매 현황</h4><table class='issue-table'>"+tableHtml+"</table></div>";
+            splitDiv.innerHTML="<div class='issue-split-box'><h4>📊 구매상품명 연관 키워드 데이터</h4><table class='issue-table'>"+kwHtml+"</table></div><div class='issue-split-box'><h4>🛒 브랜드 검색 유입 구매 현황</h4><div style='max-height:280px;overflow-y:auto;border-radius:8px'><table class='issue-table'>"+tableHtml+"</table></div></div>";
             container.appendChild(splitDiv);
           } else {
             var wrap=document.createElement("div");wrap.style.cssText="margin:8px 0 12px 0";

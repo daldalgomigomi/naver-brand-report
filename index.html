@@ -362,7 +362,37 @@
             kwStats.forEach(function(k,i){kwHtml+="<tr style='background:"+(i%2===0?"#fff":"#fafafa")+"'><td style='font-weight:600'>"+k.kw+"</td><td>"+fmt(k.imp)+"</td><td>"+fmt(k.clk)+"</td><td>"+k.ctr+"</td></tr>";});
             kwHtml+="<tr style='background:#f9fffe;font-weight:700'><td>합계/평균</td><td>"+fmt(tImp)+"</td><td>"+fmt(tClk)+"</td><td>"+pct(tClk,tImp)+"</td></tr></tbody>";
             var splitDiv=document.createElement("div");splitDiv.className="issue-split";
-            splitDiv.innerHTML="<div class='issue-split-box'><h4>📊 구매상품명 연관 키워드 데이터</h4><table class='issue-table'>"+kwHtml+"</table></div><div class='issue-split-box'><h4>🛒 브랜드 검색 유입 구매 현황</h4><div style='max-height:280px;overflow-y:auto;border-radius:8px'><table class='issue-table'>"+tableHtml+"</table></div></div>";
+            // 합계 행 분리
+            var totalRow="", bodyRows=[];
+            iss.rows.forEach(function(row){
+              if(String(row[0]).includes("합계")){
+                var data=row.filter(function(c){return c&&c!=="-";});
+                var colspan=iss.headers.length-(data.length-1);
+                totalRow="<tr style='background:#f9fffe;font-weight:700'><td colspan='"+colspan+"' style='text-align:center'>합계</td>"+data.slice(1).map(function(c){return"<td>"+c+"</td>";}).join("")+"</tr>";
+              } else {
+                var r="<tr style='background:"+(bodyRows.length%2===0?"#fff":"#fafafa")+"'>";
+                row.forEach(function(cell,ci){
+                  var isPC=cell==="PC",isMO=cell==="MO";
+                  var color=isPC?"#1a73e8":isMO?"#03C75A":"inherit";
+                  var isBest=ci===prodIdx&&bestProds.has(cell);
+                  r+="<td style='color:"+color+";font-weight:"+(isPC||isMO||isBest?700:400)+"'>"+(isBest?"⭐ "+cell:cell)+"</td>";
+                });
+                r+="</tr>";
+                bodyRows.push(r);
+              }
+            });
+
+            var scrollTableHtml="<div style='border:1px solid #e5e7eb;border-radius:8px;overflow:hidden'>"
+              +"<table class='issue-table' style='margin:0'><thead><tr>"+iss.headers.map(function(h){return"<th>"+h+"</th>";}).join("")+"</tr></thead></table>"
+              +"<div style='max-height:200px;overflow-y:auto;border-top:1px solid #e5e7eb;position:relative'>"
+              +"<div style='position:absolute;bottom:0;left:0;right:0;height:24px;background:linear-gradient(transparent,rgba(0,0,0,0.06));pointer-events:none;border-radius:0 0 8px 8px'></div>"
+              +"<table class='issue-table' style='margin:0'><tbody>"+bodyRows.join("")+"</tbody></table>"
+              +"</div>"
+              +"<table class='issue-table' style='margin:0;border-top:2px solid #e5e7eb'><tbody>"+totalRow+"</tbody></table>"
+              +"</div>";
+
+            splitDiv.innerHTML="<div class='issue-split-box'><h4>📊 구매상품명 연관 키워드 데이터</h4><table class='issue-table'>"+kwHtml+"</table></div>"
+              +"<div class='issue-split-box'><h4>🛒 브랜드 검색 유입 구매 현황 <span style='font-size:10px;color:#888;font-weight:400'>▼ 스크롤</span></h4>"+scrollTableHtml+"</div>";
             container.appendChild(splitDiv);
           } else {
             var wrap=document.createElement("div");wrap.style.cssText="margin:8px 0 12px 0";
